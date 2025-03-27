@@ -1,483 +1,318 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>THEY'RE IN YOUR BOWELS</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>leave now</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Creepster&family=VT323&display=swap');
+        
         body {
-            background-color: #000000;
-            color: #FF00FF;
-            font-family: "Comic Sans MS", cursive, sans-serif;
-            background-image: 
-                url('https://web.archive.org/web/19990209022528im_/http://www.geocities.com/Heartland/Plains/4483/yellow_star_ani.gif'),
-                url('https://web.archive.org/web/20090821102209/http://geocities.com/Area51/Keep/8905/undercon2.gif');
-            background-blend-mode: screen;
+            background-color: #000;
+            color: #8b0000;
+            font-family: 'VT323', monospace;
             margin: 0;
-            padding: 20px;
+            padding: 0;
             overflow-x: hidden;
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><text x="0" y="20" font-family="Arial" font-size="20" fill="red">☠</text></svg>'), auto;
         }
-        .blink {
-            animation: blink 0.05s step-end infinite alternate, colorshift 2s infinite;
-            background-color: transparent !important;
+
+        .glitch {
+            position: relative;
+            animation: glitch-effect 3s infinite linear;
         }
-        @keyframes blink {
-            50% { opacity: 0; }
+
+        @keyframes glitch-effect {
+            0% { text-shadow: 3px 0 red, -3px 0 cyan; }
+            25% { text-shadow: -3px 0 red, 3px 0 cyan; }
+            50% { text-shadow: 3px 0 red, -3px 0 cyan; transform: skew(10deg); }
+            75% { text-shadow: -3px 0 red, 3px 0 cyan; }
+            100% { text-shadow: 3px 0 red, -3px 0 cyan; }
         }
-        @keyframes colorshift {
-            0% { color: #FF0000; }
-            25% { color: #00FF00; }
-            50% { color: #0000FF; }
-            75% { color: #FFFF00; }
-            100% { color: #FF00FF; }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
         }
-        .marquee {
-            color: #FF0000;
-            font-size: 32px;
-            text-shadow: 0 0 10px #00FFFF;
-            transform: rotate(2deg);
-            animation: shake 0.2s infinite;
+
+        h1 {
+            font-family: 'Creepster', cursive;
+            font-size: 4rem;
+            text-align: center;
+            margin-bottom: 30px;
+            color: #ff0000;
+            text-shadow: 0 0 10px #ff0000;
+            animation: flicker 0.5s infinite alternate;
         }
-        .counter {
-            position: fixed;
-            bottom: 10px;
-            right: 10px;
-            background: black;
-            border: 3px ridge #FF0000;
-            padding: 5px;
-            animation: pulse 0.5s infinite;
+
+        @keyframes flicker {
+            0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+                text-shadow: 0 0 10px #ff0000, 0 0 20px #ff0000;
+            }
+            20%, 24%, 55% {
+                text-shadow: none;
+            }
         }
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.2); }
-            100% { transform: scale(1); }
+
+        .nav {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 50px;
         }
-        .under-construction {
-            border: 5px dotted #FF00FF;
-            padding: 10px;
-            margin: 20px 0;
-            animation: pulse 1s infinite, shake 0.3s infinite;
+
+        .nav-item {
+            position: relative;
+            padding: 15px;
+            border: 1px solid #8b0000;
+            color: #8b0000;
+            text-decoration: none;
+            font-size: 1.5rem;
+            transition: all 0.3s;
+            overflow: hidden;
+            background-color: rgba(0, 0, 0, 0.3);
         }
-        .guestbook {
-            border: 3px solid #00FF00;
-            background-color: #000000;
-            padding: 10px;
-            margin-top: 30px;
-            transform: rotate(1deg);
-            animation: shake 0.5s infinite, colorshift 3s infinite;
+
+        .nav-item:hover {
+            color: #ff0000;
+            border-color: #ff0000;
+            background-color: rgba(139, 0, 0, 0.2);
+            animation: shake 0.5s infinite;
         }
+
         @keyframes shake {
-            0% { transform: translate(1px, 1px) rotate(0deg); }
-            10% { transform: translate(-1px, -2px) rotate(-1deg); }
-            20% { transform: translate(-3px, 0px) rotate(1deg); }
-            30% { transform: translate(3px, 2px) rotate(0deg); }
-            40% { transform: translate(1px, -1px) rotate(1deg); }
-            50% { transform: translate(-1px, 2px) rotate(-1deg); }
-            60% { transform: translate(-3px, 1px) rotate(0deg); }
-            70% { transform: translate(3px, 1px) rotate(-1deg); }
-            80% { transform: translate(-1px, -1px) rotate(1deg); }
-            90% { transform: translate(1px, 2px) rotate(0deg); }
-            100% { transform: translate(1px, -2px) rotate(-1deg); }
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
         }
+
+        .nav-item::before {
+            content: ">";
+            position: absolute;
+            left: -20px;
+            transition: all 0.3s;
+        }
+
+        .nav-item:hover::before {
+            left: 5px;
+        }
+
         .blood {
-            position: fixed;
-            color: #FF0000;
-            font-size: 24px;
-            z-index: 1000;
+            position: absolute;
+            background-color: #8b0000;
+            opacity: 0.7;
+            border-radius: 50%;
             pointer-events: none;
-            animation: drip 3s linear forwards;
-            text-shadow: 0 0 5px black;
+            z-index: 1000;
         }
-        @keyframes drip {
-            to { transform: translateY(100vh); }
-        }
+
         .eye {
             position: fixed;
-            width: 50px;
-            height: 50px;
-            background: white;
+            width: 30px;
+            height: 30px;
+            background-color: red;
             border-radius: 50%;
-            animation: watch 5s infinite;
+            pointer-events: none;
             z-index: 999;
+            opacity: 0.7;
+            animation: blink 4s infinite;
         }
-        .pupil {
-            position: absolute;
-            width: 20px;
-            height: 20px;
-            background: black;
-            border-radius: 50%;
-            top: 15px;
-            left: 15px;
-            animation: shrink 1s infinite alternate;
+
+        @keyframes blink {
+            0%, 48%, 52%, 100% { transform: scaleY(1); }
+            50% { transform: scaleY(0.1); }
         }
-        @keyframes shrink {
-            to { transform: scale(0.5); }
+
+        .whisper {
+            position: fixed;
+            color: #8b0000;
+            font-size: 0.8rem;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 998;
+            animation: whisper 10s infinite;
         }
-        @keyframes watch {
-            0% { top: 10%; left: 10%; }
-            25% { top: 10%; left: 80%; }
-            50% { top: 80%; left: 80%; }
-            75% { top: 80%; left: 10%; }
-            100% { top: 10%; left: 10%; }
+
+        @keyframes whisper {
+            0% { opacity: 0; transform: translateY(0); }
+            10% { opacity: 0.1; }
+            20% { opacity: 0; }
+            100% { opacity: 0; }
         }
-        a {
-            animation: colorChange 0.5s infinite;
+
+        .static {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0, 0, 0, 0.9),
+                rgba(0, 0, 0, 0.9) 1px,
+                transparent 1px,
+                transparent 2px
+            );
+            pointer-events: none;
+            z-index: -1;
+            opacity: 0.1;
+            animation: static-anim 0.1s infinite;
         }
-        @keyframes colorChange {
-            0% { color: #FF0000; }
-            25% { color: #00FF00; }
-            50% { color: #0000FF; }
-            75% { color: #FFFF00; }
-            100% { color: #FF00FF; }
+
+        @keyframes static-anim {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-2px); }
         }
-        .window-mover {
+
+        footer {
+            margin-top: 50px;
+            text-align: center;
+            font-size: 0.8rem;
+            color: #333;
+        }
+
+        .face {
             position: fixed;
             width: 100px;
             height: 100px;
-            background: rgba(255,0,0,0.3);
-            z-index: 1001;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="none" stroke="%23ff0000" stroke-width="2"/><circle cx="35" cy="40" r="5" fill="%23ff0000"/><circle cx="65" cy="40" r="5" fill="%23ff0000"/><path d="M30,70 Q50,80 70,70" fill="none" stroke="%23ff0000" stroke-width="2"/></svg>');
+            opacity: 0;
             pointer-events: none;
-            animation: fly 10s infinite linear;
+            z-index: 997;
+            animation: face-appear 15s infinite;
         }
-        @keyframes fly {
-            0% { top: 0; left: 0; }
-            25% { top: 0; left: calc(100% - 100px); }
-            50% { top: calc(100% - 100px); left: calc(100% - 100px); }
-            75% { top: calc(100% - 100px); left: 0; }
-            100% { top: 0; left: 0; }
+
+        @keyframes face-appear {
+            0%, 95% { opacity: 0; transform: scale(0.5); }
+            96%, 98% { opacity: 0.8; transform: scale(1); }
+            100% { opacity: 0; }
         }
     </style>
 </head>
 <body>
-    <div class="window-mover"></div>
-    <div class="window-mover" style="animation-delay: -2s; animation-duration: 15s; background: rgba(0,255,0,0.3);"></div>
-    <div class="window-mover" style="animation-delay: -5s; animation-duration: 8s; background: rgba(0,0,255,0.3);"></div>
+    <div class="static"></div>
+    
+    <div class="container">
+        <h1 class="glitch">Poopy doody doo doo</h1>
+        
+        <div class="nav">
+            <a href="fartfinder.html" class="nav-item">FARTFINDER</a>
+            <a href="poopnews.html" class="nav-item">POOP NEWS</a>
+            <a href="poopofleaves.html" class="nav-item">POOP OF LEAVES</a>
+            <a href="schizopoop5.html" class="nav-item">SCHIZOPOOP 5</a>
+        </div>
+    </div>
 
-    <center>
-        <img src="https://web.archive.org/web/20090829054030/http://geocities.com/EnchantedForest/Dell/1236/welcome11.gif" alt="WELCOME" style="filter: hue-rotate(90deg) invert(1); animation: shake 0.1s infinite;">
-        <h1 class="blink" style="text-shadow: 0 0 10px #FF0000; transform: rotate(-2deg);">THE TOILETS ARE WATCHING</h1>
-        <div class="marquee">
-            <marquee behavior="scroll" direction="left" scrollamount="25">YOUR POOP ISN'T YOUR OWN YOUR POOP ISN'T YOUR OWN YOUR POOP ISN'T YOUR OWN</marquee>
-        </div>
-        
-        <table border="5" cellpadding="10" cellspacing="0" bgcolor="#FF00FF" style="animation: shake 0.1s infinite, pulse 0.7s infinite;">
-            <tr>
-                <td><a href="javascript:void(0)" onclick="spawnPopups(15)">DON'T TRUST</a></td>
-                <td><a href="javascript:void(0)" onclick="spawnPopups(20); makeWindowsDance()">YOUR BOWELS</a></td>
-                <td><a href="javascript:void(0)" onclick="spawnPopups(25); invertColors()">THEY LIE</a></td>
-            </tr>
-        </table>
-        
-        <div class="under-construction">
-            <img src="https://web.archive.org/web/20090821102209/http://geocities.com/Area51/Keep/8905/undercon2.gif" alt="Under Construction" style="filter: invert(1) hue-rotate(180deg);">
-            <p class="blink">THEY'VE INSTALLED CAMERAS IN YOUR COLON</p>
-        </div>
-        
-        <div style="animation: shake 0.3s infinite;">
-            <img src="https://web.archive.org/web/20091027053850/http://geocities.com/Heartland/Fields/8625/email.gif" alt="Email me" style="transform: rotate(5deg);">
-            <p class="blink">THEY'VE RECORDED <span id="counter">6666</span> SECRET POOPS</p>
-        </div>
-        
-        <div class="guestbook">
-            <h3>THE VOICES DEMAND YOUR SIGNATURE</h3>
-            <form>
-                <textarea rows="5" cols="40" style="background-color: black; color: red; border: 2px dotted yellow; animation: pulse 0.5s infinite, shake 0.2s infinite;"></textarea><br>
-                <input type="submit" value="THEY'RE MAKING ME DO THIS" style="background-color: #FF0000; color: black; font-weight: bold; animation: shake 0.1s infinite;">
-            </form>
-        </div>
-    </center>
-    
-    <div class="counter">
-        <img src="https://web.archive.org/web/20090821102209/http://geocities.com/Area51/Keep/8905/digits.gif" alt="counter" style="filter: hue-rotate(180deg);">
-    </div>
-    
-    <div class="eye" style="top: 10%; left: 10%;">
-        <div class="pupil"></div>
-    </div>
-    <div class="eye" style="top: 10%; left: 80%;">
-        <div class="pupil"></div>
-    </div>
-    <div class="eye" style="top: 80%; left: 10%; animation-delay: -2s;">
-        <div class="pupil"></div>
-    </div>
-    <div class="eye" style="top: 80%; left: 80%; animation-delay: -5s;">
-        <div class="pupil"></div>
-    </div>
-    
+    <footer>
+        ENTER AT YOUR OWN RISK<br>
+        THEY ARE WATCHING
+    </footer>
+
     <script>
-        // Create blood drips
+        // Create blood splatters
         function createBlood() {
             const blood = document.createElement('div');
             blood.className = 'blood';
-            blood.textContent = Math.random() > 0.5 ? 'POOP' : 'THEY KNOW';
-            blood.style.left = Math.random() * window.innerWidth + 'px';
-            blood.style.top = '-50px';
-            blood.style.fontSize = Math.random() * 20 + 10 + 'px';
-            blood.style.animationDuration = Math.random() * 3 + 2 + 's';
+            const size = Math.random() * 30 + 10;
+            blood.style.width = `${size}px`;
+            blood.style.height = `${size}px`;
+            blood.style.left = `${Math.random() * window.innerWidth}px`;
+            blood.style.top = `${Math.random() * window.innerHeight}px`;
             document.body.appendChild(blood);
             
             setTimeout(() => {
-                blood.remove();
+                blood.style.opacity = '0';
+                setTimeout(() => blood.remove(), 1000);
             }, 5000);
         }
+
+        // Create following eyes
+        const eye1 = document.createElement('div');
+        eye1.className = 'eye';
+        document.body.appendChild(eye1);
         
-        // Counter that randomly changes
-        setInterval(function() {
-            document.getElementById('counter').innerText = Math.floor(Math.random() * 99999);
-            if(Math.random() > 0.5) {
-                createBlood();
-            }
-        }, 200);
-        
-        // Make windows dance around
-        function makeWindowsDance() {
-            const windows = Array.from(window.open('', '_blank', 'width=200,height=200'));
-            windows.forEach((win, i) => {
-                if (win) {
-                    win.document.write(`
-                        <!DOCTYPE html>
-                        <html>
-                        <head>
-                            <title>WARNING</title>
-                            <style>
-                                body { 
-                                    background-color: black; 
-                                    color: red; 
-                                    font-family: "Comic Sans MS", cursive, sans-serif;
-                                    padding: 10px;
-                                    overflow: hidden;
-                                }
-                                .message {
-                                    animation: shake 0.${Math.floor(Math.random() * 3)}s infinite;
-                                }
-                                @keyframes shake {
-                                    0% { transform: translate(1px, 1px); }
-                                    10% { transform: translate(-1px, -2px); }
-                                    20% { transform: translate(-3px, 0px); }
-                                    30% { transform: translate(3px, 2px); }
-                                    40% { transform: translate(1px, -1px); }
-                                    50% { transform: translate(-1px, 2px); }
-                                    60% { transform: translate(-3px, 1px); }
-                                    70% { transform: translate(3px, 1px); }
-                                    80% { transform: translate(-1px, -1px); }
-                                    90% { transform: translate(1px, 2px); }
-                                    100% { transform: translate(1px, -2px); }
-                                }
-                            </style>
-                        </head>
-                        <body>
-                            <div class="message">THEY CAN SEE YOU</div>
-                            <script>
-                                setInterval(() => {
-                                    window.moveTo(
-                                        Math.random() * (screen.availWidth - 200),
-                                        Math.random() * (screen.availHeight - 200)
-                                    );
-                                }, 100);
-                            <\/script>
-                        </body>
-                        </html>
-                    `);
-                    
-                    setTimeout(() => {
-                        if (!win.closed) win.close();
-                    }, 5000);
-                }
-            });
-        }
-        
-        // Invert colors
-        function invertColors() {
-            document.body.style.filter = 'invert(1)';
+        const eye2 = document.createElement('div');
+        eye2.className = 'eye';
+        document.body.appendChild(eye2);
+
+        // Create random whispers
+        const whispers = [
+            "they're coming",
+            "look behind you",
+            "don't trust them",
+            "the walls are breathing",
+            "it's in your skin",
+            "you're not alone",
+            "they can hear you",
+            "the end is near",
+            "the files are lies",
+            "the poop is alive"
+        ];
+
+        function createWhisper() {
+            const whisper = document.createElement('div');
+            whisper.className = 'whisper';
+            whisper.textContent = whispers[Math.floor(Math.random() * whispers.length)];
+            whisper.style.left = `${Math.random() * window.innerWidth}px`;
+            whisper.style.top = `${Math.random() * window.innerHeight}px`;
+            document.body.appendChild(whisper);
+            
             setTimeout(() => {
-                document.body.style.filter = '';
-            }, 2000);
+                whisper.remove();
+            }, 10000);
         }
-        
-        // Function to spawn multiple popups at once
-        function spawnPopups(count) {
-            for (let i = 0; i < count; i++) {
-                setTimeout(() => {
-                    showPopup();
-                    if(i % 2 === 0) createBlood();
-                }, i * 30);
-            }
-        }
-        
-        // Random popup function
-        function showPopup() {
-            const width = Math.floor(Math.random() * 500) + 200;
-            const height = Math.floor(Math.random() * 500) + 150;
-            const left = Math.random() * (window.screen.availWidth - width);
-            const top = Math.random() * (window.screen.availHeight - height);
+
+        // Create random faces
+        function createFace() {
+            const face = document.createElement('div');
+            face.className = 'face';
+            face.style.left = `${Math.random() * window.innerWidth}px`;
+            face.style.top = `${Math.random() * window.innerHeight}px`;
+            document.body.appendChild(face);
             
-            const popup = window.open('', 'popup' + Date.now(), `width=${width},height=${height},left=${left},top=${top}`);
-            
-            if (popup) {
-                const scaryMessages = [
-                    "THEY CAN SMELL YOUR POOP THROUGH THE SCREEN",
-                    "YOUR POOP ISN'T YOUR OWN",
-                    "THE TOILET IS WATCHING BACK",
-                    "DON'T FLUSH - THEY'LL KNOW",
-                    "YOUR BOWELS ARE TRANSMITTING SECRETS",
-                    "THE GOVERNMENT PUT CAMERAS IN YOUR POOP",
-                    "YOUR POOP IS SENTIENT",
-                    "THE VOICES WANT YOU TO POOP YOURSELF",
-                    "DON'T TRUST YOUR OWN BOWELS",
-                    "THEY'RE STEALING YOUR POOP AT NIGHT",
-                    "YOUR POOP HAS BEEN REPLACED",
-                    "THE TOILET WATER REMEMBERS",
-                    "YOUR POOP IS A GOVERNMENT DRONE",
-                    "THEY'RE INJECTING POOP THOUGHTS",
-                    "YOUR POOP IS WATCHING YOU SLEEP",
-                    "FLUSHING SENDS MESSAGES TO THEM",
-                    "YOUR POOP IS A SPY",
-                    "DON'T LET THEM SEE YOU POOP",
-                    "THEY'RE READING YOUR POOP MIND",
-                    "YOUR POOP ISN'T REAL",
-                    "THE TOILETS ARE TALKING ABOUT YOU",
-                    "YOUR POOP HAS BEEN COMPROMISED",
-                    "THEY'RE DOWNLOADING YOUR POOP DATA",
-                    "YOUR POOP IS A LIE",
-                    "THE CIA HAS YOUR POOP PROFILE",
-                    "YOUR POOP IS BEING ANALYZED",
-                    "THEY KNOW WHAT YOU ATE",
-                    "YOUR POOP IS TRANSMITTING",
-                    "THE TOILET IS JUDGING YOU",
-                    "YOUR POOP IS A WEAPON"
-                ];
-                
-                const popupContent = `
-                    <!DOCTYPE html>
-                    <html>
-                    <head>
-                        <title>WARNING</title>
-                        <style>
-                            body { 
-                                background-color: ${getRandomDarkColor()}; 
-                                color: ${getRandomBrightColor()}; 
-                                font-family: "Comic Sans MS", cursive, sans-serif;
-                                padding: 10px;
-                                animation: shake 0.${Math.floor(Math.random() * 5)}s infinite;
-                                overflow: hidden;
-                            }
-                            .blink {
-                                animation: blink 0.${Math.floor(Math.random() * 3)}s step-end infinite alternate;
-                            }
-                            @keyframes blink {
-                                50% { opacity: 0; }
-                            }
-                            @keyframes shake {
-                                0% { transform: translate(1px, 1px); }
-                                10% { transform: translate(-1px, -2px); }
-                                20% { transform: translate(-3px, 0px); }
-                                30% { transform: translate(3px, 2px); }
-                                40% { transform: translate(1px, -1px); }
-                                50% { transform: translate(-1px, 2px); }
-                                60% { transform: translate(-3px, 1px); }
-                                70% { transform: translate(3px, 1px); }
-                                80% { transform: translate(-1px, -1px); }
-                                90% { transform: translate(1px, 2px); }
-                                100% { transform: translate(1px, -2px); }
-                            }
-                        </style>
-                    </head>
-                    <body>
-                        <center>
-                            <h1 class="blink">${scaryMessages[Math.floor(Math.random() * scaryMessages.length)]}</h1>
-                            <p class="blink">${scaryMessages[Math.floor(Math.random() * scaryMessages.length)]}</p>
-                            <marquee behavior="scroll" direction="${Math.random() > 0.5 ? 'left' : 'right'}" scrollamount="${Math.floor(Math.random() * 30) + 5}">${scaryMessages[Math.floor(Math.random() * scaryMessages.length)]}</marquee>
-                            <button onclick="window.close()" style="animation: shake 0.2s infinite;">CLOSE (THEY'RE STILL WATCHING)</button>
-                        </center>
-                        <script>
-                            // Make window move randomly
-                            setInterval(() => {
-                                window.moveTo(
-                                    Math.random() * (screen.availWidth - ${width}),
-                                    Math.random() * (screen.availHeight - ${height})
-                                );
-                            }, 500);
-                            
-                            // Change colors
-                            setInterval(() => {
-                                document.body.style.backgroundColor = "${getRandomDarkColor()}";
-                                document.body.style.color = "${getRandomBrightColor()}";
-                            }, ${Math.random() * 1000 + 300});
-                        <\/script>
-                    </body>
-                    </html>
-                `;
-                
-                popup.document.write(popupContent);
-                
-                // Make popup close randomly
-                setTimeout(function() {
-                    if (!popup.closed) {
-                        popup.close();
-                    }
-                }, Math.random() * 5000 + 2000);
-            }
+            setTimeout(() => {
+                face.remove();
+            }, 3000);
         }
-        
-        // Show random popups automatically at a much faster rate
-        setInterval(function() {
-            if(Math.random() > 0.1) {
-                spawnPopups(Math.floor(Math.random() * 10) + 5);
-            }
-        }, 300);
-        
-        // More aggressive popup spawning when mouse moves
-        document.addEventListener('mousemove', function() {
-            if(Math.random() > 0.3) {
-                spawnPopups(Math.floor(Math.random() * 5) + 1);
-            }
+
+        // Mouse move for eyes
+        document.addEventListener('mousemove', (e) => {
+            const x = e.clientX;
+            const y = e.clientY;
+            
+            // Left eye follows slightly offset
+            eye1.style.left = `${x - 20}px`;
+            eye1.style.top = `${y}px`;
+            
+            // Right eye follows slightly offset
+            eye2.style.left = `${x + 20}px`;
+            eye2.style.top = `${y}px`;
         });
-        
-        // Random dark background colors
-        function getRandomDarkColor() {
-            var colors = ['#000000', '#330000', '#003300', '#000033', '#330033', '#003333', '#300000', '#002000'];
-            return colors[Math.floor(Math.random() * colors.length)];
+
+        // Click creates blood
+        document.addEventListener('click', createBlood);
+
+        // Periodically create whispers and faces
+        setInterval(createWhisper, 3000);
+        setInterval(createFace, 15000);
+        setInterval(createBlood, 10000);
+
+        // Initial blood splatters
+        for (let i = 0; i < 10; i++) {
+            setTimeout(createBlood, i * 300);
         }
-        
-        // Random bright text colors
-        function getRandomBrightColor() {
-            var colors = ['#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF', '#FF8800', '#00FF88'];
-            return colors[Math.floor(Math.random() * colors.length)];
-        }
-        
-        // Make elements randomly blink faster
-        setInterval(function() {
-            var elements = document.getElementsByTagName('*');
-            for(var i = 0; i < elements.length; i++) {
-                if(Math.random() > 0.5) {
-                    if(elements[i].classList.contains('blink')) {
-                        elements[i].classList.remove('blink');
-                    } else {
-                        elements[i].classList.add('blink');
-                    }
-                }
-            }
-        }, 100);
-        
-        // Randomly change background color more frequently
-        setInterval(function() {
-            if(Math.random() > 0.3) {
-                document.body.style.backgroundColor = getRandomDarkColor();
-            }
-        }, 500);
-        
-        // Create initial blood drips
-        for(let i = 0; i < 10; i++) {
-            setTimeout(createBlood, i * 500);
-        }
-        
-        // Make everything shake more violently occasionally
+
+        // Random glitch effect on text
+        const titles = document.querySelectorAll('h1');
         setInterval(() => {
-            if(Math.random() > 0.8) {
-                document.body.style.animation = 'shake 0.05s infinite';
-                setTimeout(() => {
-                    document.body.style.animation = '';
-                }, 1000);
-            }
-        }, 3000);
+            titles.forEach(title => {
+                title.style.transform = `skew(${Math.random() * 20 - 10}deg)`;
+            });
+        }, 100);
     </script>
 </body>
 </html>
