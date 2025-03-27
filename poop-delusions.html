@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YOUR POOP IS WATCHING</title>
+    <style>
+        body {
+            background-color: #1a1a1a;
+            color: #8B4513;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+            cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="%238B4513"/></svg>'), auto;
+        }
+
+        .poop {
+            position: absolute;
+            background-color: #8B4513;
+            border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            text-align: center;
+            box-shadow: 0 0 20px #8B4513;
+            transition: all 0.3s;
+            z-index: 10;
+            overflow: hidden;
+        }
+
+        .poop::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 30% 30%, #A0522D, transparent 70%);
+            border-radius: inherit;
+        }
+
+        .message {
+            position: fixed;
+            background-color: #000;
+            color: #ff0000;
+            border: 3px solid #8B4513;
+            padding: 15px;
+            border-radius: 10px;
+            z-index: 100;
+            box-shadow: 0 0 30px #ff0000;
+            animation: pulse 0.5s infinite alternate;
+            max-width: 300px;
+            text-align: center;
+            display: none;
+        }
+
+        @keyframes pulse {
+            from { box-shadow: 0 0 10px #ff0000; }
+            to { box-shadow: 0 0 30px #ff0000; }
+        }
+
+        .warning {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3em;
+            color: #ff0000;
+            text-shadow: 0 0 10px #ff0000;
+            z-index: 1000;
+            text-align: center;
+            display: none;
+            background-color: rgba(0,0,0,0.8);
+            padding: 20px;
+            border: 5px solid #8B4513;
+            border-radius: 15px;
+        }
+
+        .flicker {
+            animation: flicker 0.1s infinite;
+        }
+
+        @keyframes flicker {
+            0% { opacity: 0.8; }
+            50% { opacity: 0.2; }
+            100% { opacity: 1; }
+        }
+
+        .whisper {
+            position: absolute;
+            color: #8B4513;
+            font-size: 0.8em;
+            opacity: 0.7;
+            z-index: 1;
+            white-space: nowrap;
+        }
+
+        .background-text {
+            position: fixed;
+            color: rgba(139, 69, 19, 0.1);
+            font-size: 2em;
+            z-index: -1;
+            user-select: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="warning" id="mainWarning">YOUR POOP IS LYING TO YOU</div>
+    <div class="message" id="popupMessage"></div>
+
+    <script>
+        // Create disturbing background text
+        const disturbingPhrases = [
+            "they're in your intestines",
+            "it's not really yours",
+            "the government knows",
+            "it watches you sleep",
+            "your toilet reports back",
+            "they're breeding inside you",
+            "last night it moved on its own",
+            "it remembers your childhood",
+            "your DNA is changing",
+            "the smell is a message",
+            "you're digesting lies",
+            "it wants to go back in",
+            "they communicate through you",
+            "your ancestors knew",
+            "the color is a warning",
+            "it's smarter than you",
+            "you'll never be clean",
+            "it's learning your patterns",
+            "the shape means something",
+            "you're the host"
+        ];
+
+        for (let i = 0; i < 50; i++) {
+            const text = document.createElement('div');
+            text.className = 'background-text';
+            text.textContent = disturbingPhrases[Math.floor(Math.random() * disturbingPhrases.length)];
+            text.style.left = Math.random() * 100 + 'vw';
+            text.style.top = Math.random() * 100 + 'vh';
+            text.style.transform = `rotate(${Math.random() * 360}deg)`;
+            document.body.appendChild(text);
+        }
+
+        // Create flying poop divs
+        const poopCount = 15;
+        const poops = [];
+
+        for (let i = 0; i < poopCount; i++) {
+            createPoop();
+        }
+
+        function createPoop() {
+            const poop = document.createElement('div');
+            poop.className = 'poop';
+            
+            const size = 30 + Math.random() * 70;
+            poop.style.width = size + 'px';
+            poop.style.height = size * 0.8 + 'px';
+            
+            poop.style.left = Math.random() * 90 + 'vw';
+            poop.style.top = Math.random() * 90 + 'vh';
+            
+            const messages = [
+                "I'M ALIVE", 
+                "DON'T FLUSH", 
+                "LET ME BACK IN", 
+                "I KNOW YOUR SECRETS", 
+                "WE'RE MULTIPLYING",
+                "YOUR BOWELS ARE MINE",
+                "I TASTED YOUR FEAR",
+                "I'M FROM YESTERDAY",
+                "YOU CAN'T ESCAPE",
+                "I'M IN YOUR BLOOD"
+            ];
+            
+            poop.textContent = messages[Math.floor(Math.random() * messages.length)];
+            
+            document.body.appendChild(poop);
+            poops.push({
+                element: poop,
+                x: Math.random() * window.innerWidth,
+                y: Math.random() * window.innerHeight,
+                vx: (Math.random() - 0.5) * 4,
+                vy: (Math.random() - 0.5) * 4,
+                size: size,
+                rotation: Math.random() * 360,
+                rotationSpeed: (Math.random() - 0.5) * 10,
+                pulseDirection: 1
+            });
+
+            // Add whisper effect
+            if (Math.random() > 0.7) {
+                const whisper = document.createElement('div');
+                whisper.className = 'whisper';
+                whisper.textContent = disturbingPhrases[Math.floor(Math.random() * disturbingPhrases.length)];
+                whisper.style.left = (parseInt(poop.style.left) + size/2) + 'px';
+                whisper.style.top = (parseInt(poop.style.top) + size) + 'px';
+                document.body.appendChild(whisper);
+
+                setTimeout(() => {
+                    document.body.removeChild(whisper);
+                }, 2000 + Math.random() * 3000);
+            }
+        }
+
+        // Animation loop
+        function animate() {
+            poops.forEach(p => {
+                // Update position
+                p.x += p.vx;
+                p.y += p.vy;
+                
+                // Bounce off walls
+                if (p.x < 0 || p.x > window.innerWidth - p.size) {
+                    p.vx *= -1;
+                    showRandomMessage();
+                }
+                if (p.y < 0 || p.y > window.innerHeight - p.size * 0.8) {
+                    p.vy *= -1;
+                    showRandomMessage();
+                }
+                
+                // Update rotation
+                p.rotation += p.rotationSpeed;
+                
+                // Pulsing size
+                p.size += p.pulseDirection * 0.2;
+                if (p.size > 100 || p.size < 30) {
+                    p.pulseDirection *= -1;
+                }
+                
+                // Apply transformations
+                p.element.style.left = p.x + 'px';
+                p.element.style.top = p.y + 'px';
+                p.element.style.transform = `rotate(${p.rotation}deg)`;
+                p.element.style.width = p.size + 'px';
+                p.element.style.height = p.size * 0.8 + 'px';
+                
+                // Random color changes
+                if (Math.random() > 0.95) {
+                    p.element.style.backgroundColor = `rgb(${150 + Math.random() * 50}, ${50 + Math.random() * 50}, ${0})`;
+                }
+            });
+            
+            requestAnimationFrame(animate);
+        }
+        
+        animate();
+
+        // Show random disturbing messages
+        function showRandomMessage() {
+            if (Math.random() > 0.7) {
+                const messages = [
+                    "Your poop is plotting against you",
+                    "They're communicating through the pipes",
+                    "It wasn't food - it was them all along",
+                    "The smell is a mind control agent",
+                    "Your intestines are compromised",
+                    "They're learning your schedule",
+                    "Don't trust your last bowel movement",
+                    "The toilet water remembers",
+                    "Your DNA is in their database now",
+                    "They're building something inside you",
+                    "That wasn't really waste",
+                    "Your body is no longer yours",
+                    "They've seen your browser history",
+                    "The government is in your colon",
+                    "Your microbiome is sentient",
+                    "Flushing just sends them home",
+                    "They know when you're lying",
+                    "Your diet is their weapon",
+                    "The stains are surveillance devices",
+                    "You're the last to know"
+                ];
+                
+                const popup = document.getElementById('popupMessage');
+                popup.textContent = messages[Math.floor(Math.random() * messages.length)];
+                popup.style.left = Math.random() * 70 + 'vw';
+                popup.style.top = Math.random() * 80 + 'vh';
+                popup.style.display = 'block';
+                
+                setTimeout(() => {
+                    popup.style.display = 'none';
+                }, 2000 + Math.random() * 2000);
+            }
+        }
+
+        // Show main warning randomly
+        function showMainWarning() {
+            if (Math.random() > 0.9) {
+                const warning = document.getElementById('mainWarning');
+                warning.style.display = 'block';
+                warning.classList.add('flicker');
+                
+                setTimeout(() => {
+                    warning.style.display = 'none';
+                    warning.classList.remove('flicker');
+                }, 1000 + Math.random() * 2000);
+            }
+            
+            setTimeout(showMainWarning, 5000 + Math.random() * 10000);
+        }
+        
+        showMainWarning();
+
+        // Randomly create and destroy poops
+        function managePoops() {
+            if (Math.random() > 0.7 && poops.length < 20) {
+                createPoop();
+            }
+            
+            if (Math.random() > 0.7 && poops.length > 10) {
+                const index = Math.floor(Math.random() * poops.length);
+                document.body.removeChild(poops[index].element);
+                poops.splice(index, 1);
+            }
+            
+            setTimeout(managePoops, 5000 + Math.random() * 5000);
+        }
+        
+        managePoops();
+
+        // Background color changes
+        function changeBackground() {
+            document.body.style.backgroundColor = `rgb(${10 + Math.random() * 30}, ${10 + Math.random() * 30}, ${10 + Math.random() * 30})`;
+            setTimeout(changeBackground, 1000 + Math.random() * 3000);
+        }
+        
+        changeBackground();
+
+        // Mouse movement effects
+        document.addEventListener('mousemove', (e) => {
+            if (Math.random() > 0.95) {
+                const ripple = document.createElement('div');
+                ripple.className = 'poop';
+                ripple.style.width = '10px';
+                ripple.style.height = '8px';
+                ripple.style.left = e.pageX + 'px';
+                ripple.style.top = e.pageY + 'px';
+                ripple.style.opacity = '0.7';
+                document.body.appendChild(ripple);
+                
+                let size = 10;
+                const grow = setInterval(() => {
+                    size += 2;
+                    ripple.style.width = size + 'px';
+                    ripple.style.height = size * 0.8 + 'px';
+                    ripple.style.opacity = (0.7 - size/100).toString();
+                    
+                    if (size > 50) {
+                        clearInterval(grow);
+                        document.body.removeChild(ripple);
+                    }
+                }, 30);
+            }
+        });
+
+        // Random clicks
+        function simulateClick() {
+            if (Math.random() > 0.9) {
+                const event = new MouseEvent('click', {
+                    view: window,
+                    bubbles: true,
+                    cancelable: true,
+                    clientX: Math.random() * window.innerWidth,
+                    clientY: Math.random() * window.innerHeight
+                });
+                document.dispatchEvent(event);
+            }
+            setTimeout(simulateClick, 1000 + Math.random() * 4000);
+        }
+        
+        simulateClick();
+
+        // Click handler
+        document.addEventListener('click', (e) => {
+            if (e.target.className !== 'poop' && Math.random() > 0.5) {
+                showRandomMessage();
+            }
+            
+            if (Math.random() > 0.8) {
+                const warning = document.getElementById('mainWarning');
+                warning.style.display = 'block';
+                warning.classList.add('flicker');
+                
+                setTimeout(() => {
+                    warning.style.display = 'none';
+                    warning.classList.remove('flicker');
+                }, 1000);
+            }
+        });
+
+        // Random key presses
+        function simulateKeyPress() {
+            if (Math.random() > 0.95) {
+                const event = new KeyboardEvent('keydown', {
+                    key: String.fromCharCode(65 + Math.floor(Math.random() * 26)),
+                    code: 'Key' + String.fromCharCode(65 + Math.floor(Math.random() * 26)),
+                    keyCode: 65 + Math.floor(Math.random() * 26),
+                    which: 65 + Math.floor(Math.random() * 26),
+                    shiftKey: Math.random() > 0.5
+                });
+                document.dispatchEvent(event);
+            }
+            setTimeout(simulateKeyPress, 1000 + Math.random() * 3000);
+        }
+        
+        simulateKeyPress();
+
+        // Key press handler
+        document.addEventListener('keydown', () => {
+            if (Math.random() > 0.7) {
+                document.body.style.backgroundColor = `rgb(${100 + Math.random() * 50}, ${30}, ${30})`;
+                setTimeout(() => {
+                    document.body.style.backgroundColor = '#1a1a1a';
+                }, 500);
+            }
+        });
+
+        // Window focus/blur effects
+        window.addEventListener('blur', () => {
+            document.title = "DON'T LOOK AWAY";
+            setTimeout(() => {
+                document.title = "YOUR POOP IS WATCHING";
+            }, 2000);
+        });
+
+        // Periodic title changes
+        function changeTitle() {
+            const titles = [
+                "YOUR POOP IS WATCHING",
+                "THEY KNOW YOU'RE HERE",
+                "IT'S IN THE PIPES",
+                "DON'T TRUST YOUR BOWELS",
+                "THE TOILET IS A PORTAL",
+                "YOUR STOOLS ARE SENTIENT",
+                "THE SMELL IS A LIE",
+                "FLUSHING WON'T HELP",
+                "THEY'RE MULTIPLYING",
+                "YOUR GUT IS COMPROMISED"
+            ];
+            document.title = titles[Math.floor(Math.random() * titles.length)];
+            setTimeout(changeTitle, 5000 + Math.random() * 10000);
+        }
+        
+        changeTitle();
+    </script>
+</body>
+</html>
