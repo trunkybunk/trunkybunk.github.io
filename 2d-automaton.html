@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Full-Width Smooth Cellular Automaton</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            overflow: hidden;
+            height: 100vh;
+        }
+        #controls {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            background-color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 100;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+        #automaton-container {
+            position: absolute;
+            top: 70px;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            overflow: hidden;
+            background-color: white;
+        }
+        #automaton {
+            display: flex;
+            flex-direction: column;
+            min-height: 100%;
+            justify-content: flex-end;
+        }
+        .cell-row {
+            display: flex;
+            height: 4px;
+            width: 100vw;
+        }
+        .cell {
+            flex: 1;
+            height: 4px;
+            min-width: 4px;
+        }
+        .alive {
+            background-color: #222;
+        }
+        .dead {
+            background-color: white;
+        }
+        button {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            background-color: #4a6fa5;
+            color: white;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background-color: #3a5a8f;
+        }
+        input {
+            padding: 8px;
+            text-align: center;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        label {
+            font-weight: bold;
+            margin-right: 5px;
+        }
+        .control-group {
+            display: flex;
+            align-items: center;
+        }
+        #rule {
+            width: 70px;
+        }
+        #speed {
+            width: 120px;
+        }
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <div class="control-group">
+            <label for="rule">Rule:</label>
+            <input type="number" id="rule" min="0" max="255" value="30">
+        </div>
+        <div class="control-group">
+            <label for="speed">Speed:</label>
+            <input type="range" id="speed" min="1" max="100" value="30">
+            <span id="speed-value">30</span>
+        </div>
+        <button onclick="startAutomaton()">Start</button>
+        <button onclick="stopAutomaton()">Stop</button>
+        <button onclick="resetAutomaton()">Reset</button>
+    </div>
+    <div id="automaton-container">
+        <div id="automaton"></div>
+    </div>
+
+    <script>
+        // State
+        let automaton = [];
+        let currentGeneration = 0;
+        let timer = null;
+        let speed = 30;
+        let cellCount = 0;
+        let rowHeight = 4;
+        let maxRows = 500;
+        let lastRenderTime = 0;
+        let targetScrollPosition = 0;
+        let currentScrollPosition = 0;
+        let scrollAnimationId = null;
+
+        // DOM elements
+        const automatonContainer = document.getElementById('automaton-container');
+        const automatonElement = document.getElementById('automaton');
+        const ruleInput = document.getElementById('rule');
+        const speedInput = document.getElementById('speed');
+        const speedValue = document.getElementById('speed-value');
+
+        // Initialize
+        function initializeAutomaton() {
+            stopAutomaton();
+            automaton = [];
+            automatonElement.innerHTML = '';
+            currentGeneration = 0;
+            
+            // Calculate number of cells based on screen width
+            calculateCellCount();
+            
+            // Create first generation with a single alive cell in the middle
+            let firstGen = new Array(cellCount).fill(0);
+            firstGen[Math.floor(cellCount/2)] = 1;
+            automaton.push(firstGen);
+            
+            renderRow(firstGen);
+        }
+
+        // Calculate number of cells to fill screen width
+        function calculateCellCount() {
+            const viewportWidth = window.innerWidth;
+            cellCount = Math.floor(viewportWidth / rowHeight);
+        }
+
+        // Generate next row
+        function nextGeneration() {
+            const rule = parseInt(ruleInput.value) || 30;
+            const lastGen = automaton[automaton.length-1];
+            const newGen = new Array(cellCount).fill(0);
+            
+            for (let i = 0; i < cellCount; i++) {
+                const left = lastGen[(i-1 + cellCount) % cellCount];
+                const current = lastGen[i];
+                const right = lastGen[(i+1) % cellCount];
+                const pattern = (left << 2) | (current << 1) | right;
+                newGen[i] = (rule >> pattern) & 1;
+            }
+            
+            automaton.push(newGen);
+            currentGeneration++;
+            
+            // Remove old rows if we exceed maximum
+            if (automaton.length > maxRows) {
+                automaton.shift();
+                if (automatonElement.children.length > maxRows) {
+                    automatonElement.removeChild(automatonElement.firstChild);
+                }
+            }
+            
+            renderRow(newGen);
+            updateScrollTarget();
+        }
+
+        // Render a single row
+        function renderRow(rowData) {
+            const now = performance.now();
+            // Throttle rendering to maintain smoothness
+            if (now - lastRenderTime < 16) return; // ~60fps
+            
+            const rowDiv = document.createElement('div');
+            rowDiv.className = 'cell-row';
+            
+            for (let x = 0; x < cellCount; x++) {
+                const cell = document.createElement('div');
+                cell.className = `cell ${rowData[x] ? 'alive' : 'dead'}`;
+                rowDiv.appendChild(cell);
+            }
+            
+            automatonElement.appendChild(rowDiv);
+            lastRenderTime = now;
+        }
+
+        // Update scroll target
+        function updateScrollTarget() {
+            targetScrollPosition = automatonElement.scrollHeight - automatonContainer.clientHeight;
+            
+            // Start scroll animation if not already running
+            if (!scrollAnimationId) {
+                animateScroll();
+            }
+        }
+
+        // Smooth scroll animation
+        function animateScroll() {
+            const diff = targetScrollPosition - currentScrollPosition;
+            
+            if (Math.abs(diff) < 1) {
+                currentScrollPosition = targetScrollPosition;
+                automatonContainer.scrollTop = currentScrollPosition;
+                scrollAnimationId = null;
+                return;
+            }
+            
+            // Ease-out scrolling
+            currentScrollPosition += diff * 0.1;
+            automatonContainer.scrollTop = currentScrollPosition;
+            
+            scrollAnimationId = requestAnimationFrame(animateScroll);
+        }
+
+        // Control functions
+        function startAutomaton() {
+            stopAutomaton();
+            if (automaton.length === 0) initializeAutomaton();
+            timer = setInterval(nextGeneration, 1000 / speed);
+        }
+
+        function stopAutomaton() {
+            if (timer) clearInterval(timer);
+            timer = null;
+            if (scrollAnimationId) {
+                cancelAnimationFrame(scrollAnimationId);
+                scrollAnimationId = null;
+            }
+        }
+
+        function resetAutomaton() {
+            stopAutomaton();
+            initializeAutomaton();
+        }
+
+        // Event listeners
+        speedInput.addEventListener('input', function() {
+            speed = parseInt(this.value);
+            speedValue.textContent = speed;
+            if (timer) {
+                stopAutomaton();
+                startAutomaton();
+            }
+        });
+
+        // Handle window resize
+        function handleResize() {
+            calculateCellCount();
+            if (automaton.length > 0) {
+                // Reinitialize if already running
+                const wasRunning = !!timer;
+                if (wasRunning) stopAutomaton();
+                initializeAutomaton();
+                if (wasRunning) startAutomaton();
+            }
+        }
+
+        window.addEventListener('resize', handleResize);
+
+        // Initialize on load
+        initializeAutomaton();
+    </script>
+</body>
+</html>
