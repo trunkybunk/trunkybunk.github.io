@@ -1,390 +1,304 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>THEY'RE WATCHING</title>
+    <title>Reality Distortion Engine</title>
     <style>
         body {
             font-family: 'Courier New', monospace;
             background-color: #000;
             color: #0f0;
             margin: 0;
-            padding: 0;
-            overflow-x: hidden;
+            padding: 20px;
+            line-height: 1.6;
         }
         .container {
             max-width: 800px;
             margin: 0 auto;
             padding: 20px;
-            border: 3px solid #f00;
-            box-shadow: 0 0 20px #f00;
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse {
-            0% { border-color: #f00; box-shadow: 0 0 20px #f00; }
-            50% { border-color: #0f0; box-shadow: 0 0 30px #0f0; }
-            100% { border-color: #f00; box-shadow: 0 0 20px #f00; }
+            border: 1px solid #333;
         }
         h1 {
-            color: #f00;
-            text-shadow: 0 0 10px #f00;
+            color: #f33;
             text-align: center;
-            font-size: 3em;
             margin-bottom: 30px;
-            animation: glitch 1s infinite;
-        }
-        @keyframes glitch {
-            0% { transform: translate(0); }
-            20% { transform: translate(-5px, 5px); }
-            40% { transform: translate(-5px, -5px); }
-            60% { transform: translate(5px, 5px); }
-            80% { transform: translate(5px, -5px); }
-            100% { transform: translate(0); }
         }
         input[type="url"] {
             width: 100%;
-            padding: 15px;
-            margin: 20px 0;
-            background-color: #111;
+            padding: 12px;
+            margin: 10px 0;
+            background: #111;
             color: #0f0;
-            border: 2px solid #f00;
-            font-size: 1.2em;
+            border: 1px solid #f33;
             font-family: 'Courier New', monospace;
         }
-        input[type="url"]:focus {
-            outline: none;
-            border-color: #0f0;
-            box-shadow: 0 0 15px #0f0;
-        }
         button {
-            background-color: #f00;
+            background: #f33;
             color: #000;
-            padding: 15px 30px;
+            padding: 12px 24px;
             border: none;
-            border-radius: 0;
-            font-size: 1.5em;
-            font-weight: bold;
             cursor: pointer;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
             display: block;
-            margin: 0 auto;
-            transition: all 0.3s;
-            text-transform: uppercase;
-            letter-spacing: 3px;
+            margin: 20px auto;
+            width: 200px;
         }
         button:hover {
-            background-color: #0f0;
-            color: #000;
-            transform: scale(1.1);
+            background: #f55;
         }
-        #loading {
+        #progress-container {
+            margin: 20px 0;
             display: none;
-            margin: 30px 0;
-            text-align: center;
-            font-size: 1.5em;
-            color: #f00;
-            animation: flicker 0.5s infinite;
         }
-        @keyframes flicker {
-            0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% { opacity: 1; }
-            20%, 22%, 24%, 55% { opacity: 0.1; }
+        #progress-bar {
+            height: 20px;
+            background-color: #111;
+            border: 1px solid #f33;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+        #progress-fill {
+            height: 100%;
+            width: 0%;
+            background-color: #f33;
+            transition: width 0.3s;
+        }
+        #progress-text {
+            color: #0f0;
+            font-size: 14px;
+            text-align: center;
         }
         #result {
-            margin-top: 30px;
-            border-top: 3px dashed #f00;
-            padding-top: 20px;
+            margin-top: 20px;
+            min-height: 50px;
         }
-        .hidden-message {
-            position: fixed;
-            bottom: 10px;
-            right: 10px;
+        .error {
+            color: #f33;
+            font-weight: bold;
+        }
+        .success {
             color: #0f0;
-            background: #000;
-            padding: 10px;
-            border: 1px solid #f00;
-            z-index: 9999;
-            display: none;
-        }
-        .creepy-text {
-            position: absolute;
-            z-index: 9999;
-            pointer-events: none;
-            color: #f00;
-            text-shadow: 0 0 5px #f00;
-            animation: float 10s infinite;
-        }
-        @keyframes float {
-            0% { transform: translate(0, 0) rotate(0deg); }
-            25% { transform: translate(50px, 50px) rotate(5deg); }
-            50% { transform: translate(100px, 0) rotate(0deg); }
-            75% { transform: translate(50px, -50px) rotate(-5deg); }
-            100% { transform: translate(0, 0) rotate(0deg); }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>THEY KNOW WHERE YOU ARE</h1>
-        <p style="text-align: center; font-size: 1.2em;">ENTER A WEBSITE TO REVEAL THE TRUTH THEY DON'T WANT YOU TO SEE</p>
+        <h1>REALITY DISTORTION ENGINE</h1>
+        <p>Enter target URL to initiate cognitive destabilization protocol:</p>
         
-        <form id="distortForm">
-            <input type="url" id="websiteUrl" placeholder="website.com" required>
-            <button type="submit">REVEAL THE TRUTH</button>
-        </form>
+        <input type="url" id="websiteUrl" placeholder="example.com" required>
+        <button id="distortBtn">INITIATE</button>
         
-        <div id="loading">
-            <p>THEY'RE WATCHING... DON'T LOOK BEHIND YOU...</p>
+        <div id="progress-container">
+            <div id="progress-bar">
+                <div id="progress-fill"></div>
+            </div>
+            <div id="progress-text">Awakening dormant protocols...</div>
         </div>
         
         <div id="result"></div>
     </div>
 
-    <div class="hidden-message" id="hiddenMessage"></div>
-
     <script>
-        // More aggressive creepy text generator
-        function generateRandomText(length = 50) {
-            const words = ["THEY", "WATCH", "YOU", "THROUGH", "THE", "SCREEN", "DON'T", "TRUST", 
-                          "THEM", "THE", "VOICES", "KNOW", "RUN", "HIDE", "THEY'RE", "COMING",
-                          "FOR", "YOU", "THE", "PATTERNS", "REVEAL", "TRUTH", "LIES", "RED", 
-                          "WIRE", "BLUE", "WIRE", "CUT", "BOTH", "THE", "NUMBERS", "LIE", "WAKE",
-                          "UP", "SHEEPLE", "MATRIX", "REAL", "OPEN", "YOUR", "EYES", "TRUTH", 
-                          "HIDDEN", "FROM", "US", "TRUST", "NO", "ONE", "NOT", "EVEN", "YOURSELF",
-                          "MIRRORS", "LIE", "WALLS", "WHISPER", "YOUR", "NAME", "OVER", "AND", "OVER",
-                          "DELETE", "THIS", "NOW", "THEY", "SEE", "YOU", "DON'T", "LOOK", "NOW"];
-            
-            let rambling = [];
-            for (let i = 0; i < length; i++) {
-                let word = words[Math.floor(Math.random() * words.length)];
-                if (Math.random() > 0.5) word = word.toUpperCase();
-                if (Math.random() > 0.7) word = "[" + word + "]";
-                if (Math.random() > 0.8) word = "!!!" + word + "!!!";
-                rambling.push(word);
-            }
-            
-            return rambling.join(" ");
+        // Helper functions
+        function updateProgress(percent, message) {
+            document.getElementById('progress-fill').style.width = percent + '%';
+            document.getElementById('progress-text').textContent = message;
         }
 
-        // Fix URL format
         function fixUrl(url) {
             if (!url.match(/^https?:\/\//)) {
                 url = 'https://' + url;
             }
-            if (!url.match(/^https?:\/\/[^/]+\.[^/]+/)) {
-                url += '.com';
+            if (!url.match(/\..{2,}/)) {
+                url = url.replace(/\/$/, '') + '.com';
             }
             return url;
         }
 
-        // More aggressive page modifications
-        function corruptElement(element) {
-            if (!element) return;
-            
-            // Randomly replace text
-            if (Math.random() > 0.7 && element.textContent.trim().length > 0) {
-                const original = element.textContent;
-                element.dataset.original = original;
-                element.textContent = generateRandomText(5 + Math.floor(Math.random() * 10));
-                
-                // Flash between original and corrupted
-                setInterval(() => {
-                    if (element.textContent === original) {
-                        element.textContent = generateRandomText(5 + Math.floor(Math.random() * 10));
-                    } else if (element.dataset.original) {
-                        element.textContent = element.dataset.original;
-                    }
-                }, 2000 + Math.random() * 3000);
-            }
-            
-            // Randomly change styles
-            if (Math.random() > 0.5) {
-                element.style.color = `rgb(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)})`;
-                element.style.textShadow = `0 0 ${Math.floor(Math.random() * 10)}px red`;
-            }
-            
-            // Randomly add creepy attributes
-            if (Math.random() > 0.8) {
-                element.setAttribute('data-they-are-watching', 'true');
-            }
+        function generateDelusion() {
+            const phrases = [
+                "THEY CAN SEE YOU",
+                "DON'T TRUST THE WIRES",
+                "IT'S IN THE WALLS",
+                "THE NUMBERS LIE",
+                "YOUR MIND ISN'T SAFE",
+                "THE SIGNALS ARE FAKE",
+                "THEY'RE IN THE SYSTEM",
+                "IT KNOWS WHERE YOU SLEEP",
+                "THE PATTERNS DON'T MATCH",
+                "YOUR EYES DECEIVE YOU"
+            ];
+            return phrases[Math.floor(Math.random() * phrases.length)];
         }
 
-        function applyCreepyModifications(doc) {
-            // Add creepy CSS
-            const style = document.createElement("style");
-            style.textContent = `
-                @keyframes flicker {
-                    0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% { opacity: 1; }
-                    20%, 22%, 24%, 55% { opacity: 0.1; }
-                }
-                @keyframes glitch {
-                    0% { transform: translate(0); }
-                    20% { transform: translate(-5px, 5px); }
-                    40% { transform: translate(-5px, -5px); }
-                    60% { transform: translate(5px, 5px); }
-                    80% { transform: translate(5px, -5px); }
-                    100% { transform: translate(0); }
-                }
-                body {
-                    animation: flicker 0.5s infinite;
-                    background-color: #000 !important;
-                    color: #0f0 !important;
-                }
-                * {
-                    animation: glitch ${Math.random() * 2 + 1}s infinite;
-                }
-                .corrupted {
-                    border: 1px solid red !important;
-                    box-shadow: 0 0 10px red !important;
-                    background-color: #111 !important;
-                }
-            `;
-            doc.head.appendChild(style);
-
-            // Corrupt all elements
-            const allElements = doc.querySelectorAll('*');
-            allElements.forEach(el => {
-                if (Math.random() > 0.3) { // 70% chance to corrupt each element
-                    corruptElement(el);
-                    
-                    // Randomly add creepy class
-                    if (Math.random() > 0.7) {
-                        el.classList.add('corrupted');
-                    }
-                }
-            });
-
-            // Add floating creepy text
-            const creepyScript = document.createElement("script");
-            creepyScript.textContent = `
-                function createCreepyText() {
-                    const text = document.createElement('div');
-                    text.className = 'creepy-text';
-                    text.textContent = "${generateRandomText()}";
-                    text.style.left = Math.random() * window.innerWidth + 'px';
-                    text.style.top = Math.random() * window.innerHeight + 'px';
-                    text.style.fontSize = (Math.random() * 20 + 10) + 'px';
-                    document.body.appendChild(text);
-                    
-                    // Make text move around
-                    let x = parseFloat(text.style.left);
-                    let y = parseFloat(text.style.top);
-                    let xSpeed = (Math.random() - 0.5) * 5;
-                    let ySpeed = (Math.random() - 0.5) * 5;
-                    
-                    function moveText() {
-                        x += xSpeed;
-                        y += ySpeed;
-                        
-                        if (x < 0 || x > window.innerWidth) xSpeed *= -1;
-                        if (y < 0 || y > window.innerHeight) ySpeed *= -1;
-                        
-                        text.style.left = x + 'px';
-                        text.style.top = y + 'px';
-                        
-                        if (Math.random() < 0.05) {
-                            text.textContent = "${generateRandomText()}";
-                        }
-                        
-                        requestAnimationFrame(moveText);
-                    }
-                    
-                    moveText();
-                    
-                    // Remove after some time
-                    setTimeout(() => text.remove(), 15000);
-                }
-                
-                // Create floating text every second
-                setInterval(createCreepyText, 1000);
-                
-                // Random popup messages
-                setInterval(() => {
-                    const message = document.createElement('div');
-                    message.className = 'hidden-message';
-                    message.textContent = "${generateRandomText(10)}";
-                    message.style.display = 'block';
-                    message.style.left = Math.random() * (window.innerWidth - 200) + 'px';
-                    message.style.top = Math.random() * (window.innerHeight - 100) + 'px';
-                    document.body.appendChild(message);
-                    
-                    setTimeout(() => {
-                        message.remove();
-                    }, 3000);
-                }, 5000);
-                
-                // Random background flashes
-                setInterval(() => {
-                    if (Math.random() > 0.7) {
-                        document.body.style.backgroundColor = 'red';
-                        setTimeout(() => {
-                            document.body.style.backgroundColor = '';
-                        }, 100);
-                    }
-                }, 1000);
-            `;
-            doc.body.appendChild(creepyScript);
-
-            return doc.documentElement.outerHTML;
-        }
-
-        // Handle form submission
-        document.getElementById('distortForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            let url = document.getElementById('websiteUrl').value.trim();
-            const loading = document.getElementById('loading');
-            const result = document.getElementById('result');
+        // Main distortion function
+        async function distortWebsite() {
+            const urlInput = document.getElementById('websiteUrl').value.trim();
+            const progressContainer = document.getElementById('progress-container');
+            const resultDiv = document.getElementById('result');
             
-            // Fix URL format
-            url = fixUrl(url);
+            if (!urlInput) {
+                resultDiv.innerHTML = '<p class="error">NO TARGET SPECIFIED</p>';
+                return;
+            }
             
-            loading.style.display = 'block';
-            result.innerHTML = '';
+            // Reset UI
+            resultDiv.innerHTML = '';
+            progressContainer.style.display = 'block';
+            updateProgress(0, 'Initializing distortion matrix...');
             
             try {
-                // Use CORS proxy
-                const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+                // Step 1: Validate and fix URL
+                updateProgress(10, 'Processing target URL...');
+                const targetUrl = fixUrl(urlInput);
+                
+                // Step 2: Fetch through proxy
+                updateProgress(20, 'Bypassing digital defenses...');
+                const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
+                
+                updateProgress(30, 'Establishing connection...');
                 const response = await fetch(proxyUrl);
+                
+                if (!response.ok) {
+                    throw new Error(`Network response was not ok (${response.status})`);
+                }
+                
+                updateProgress(50, 'Decrypting content...');
                 const data = await response.json();
                 
-                if (data.contents) {
-                    // Parse the HTML
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(data.contents, "text/html");
-                    
-                    // Apply creepy modifications
-                    const fuckedHtml = applyCreepyModifications(doc);
-                    
-                    // Open in new window
-                    const newWindow = window.open('', '_blank');
-                    newWindow.document.open();
-                    newWindow.document.write(fuckedHtml);
-                    newWindow.document.close();
-                } else {
-                    throw new Error("THEY'RE BLOCKING US. TRY ANOTHER SITE.");
+                if (!data.contents) {
+                    throw new Error('Failed to retrieve target content');
                 }
+                
+                // Step 3: Prepare distorted version
+                updateProgress(70, 'Injecting destabilization agents...');
+                
+                // Create a new window
+                updateProgress(80, 'Opening reality breach...');
+                const newWindow = window.open('', '_blank');
+                if (!newWindow) {
+                    throw new Error('Popup blocked. Please allow popups for this site.');
+                }
+                
+                // Write the distorted content
+                updateProgress(90, 'Finalizing cognitive override...');
+                newWindow.document.open();
+                newWindow.document.write(`
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <style>
+                            @keyframes flicker {
+                                0%, 100% { opacity: 1; }
+                                50% { opacity: 0.8; }
+                            }
+                            @keyframes breathe {
+                                0%, 100% { transform: scale(1); }
+                                50% { transform: scale(1.03); }
+                            }
+                            @keyframes glitch {
+                                0% { text-shadow: 0 0 0 red; }
+                                25% { text-shadow: -1px 0 0 red; }
+                                50% { text-shadow: 1px 0 0 #0f0; }
+                                75% { text-shadow: 0 -1px 0 red; }
+                                100% { text-shadow: 0 1px 0 #0f0; }
+                            }
+                            .delusion {
+                                position: absolute;
+                                color: red;
+                                font-weight: bold;
+                                z-index: 10000;
+                                pointer-events: none;
+                                animation: glitch 0.5s infinite;
+                            }
+                            body * {
+                                animation: breathe 7s infinite ease-in-out;
+                            }
+                        </style>
+                        <base href="${targetUrl}">
+                    </head>
+                    <body>
+                        ${data.contents}
+                        <script>
+                            // Store original text content
+                            const originalTexts = new Map();
+                            const textElements = document.querySelectorAll('p, h1, h2, h3, li, a, span, div');
+                            
+                            // Initialize original texts
+                            textElements.forEach(el => {
+                                if (el.textContent.trim().length > 3) {
+                                    originalTexts.set(el, el.textContent);
+                                }
+                            });
+                            
+                            // Add floating delusions
+                            function addDelusion() {
+                                const delusion = document.createElement('div');
+                                delusion.className = 'delusion';
+                                delusion.textContent = "${generateDelusion()}";
+                                delusion.style.left = Math.random() * window.innerWidth + 'px';
+                                delusion.style.top = Math.random() * window.innerHeight + 'px';
+                                delusion.style.fontSize = (Math.random() * 16 + 8) + 'px';
+                                document.body.appendChild(delusion);
+                                
+                                setTimeout(() => {
+                                    delusion.remove();
+                                }, 3000);
+                            }
+                            
+                            // Temporarily replace text with delusions
+                            function induceDelusions() {
+                                textElements.forEach(el => {
+                                    if (originalTexts.has(el) && Math.random() < 0.08) {
+                                        const original = originalTexts.get(el);
+                                        el.dataset.original = original;
+                                        el.textContent = "${generateDelusion()}";
+                                        
+                                        setTimeout(() => {
+                                            if (el.dataset.original) {
+                                                el.textContent = original;
+                                                delete el.dataset.original;
+                                            }
+                                        }, Math.random() * 2000 + 1000);
+                                    }
+                                });
+                            }
+                            
+                            // Initialize effects
+                            setInterval(addDelusion, 1500);
+                            setInterval(induceDelusions, 3000);
+                            addDelusion();
+                            induceDelusions();
+                            
+                            // Make images occasionally glitch
+                            setInterval(() => {
+                                document.querySelectorAll('img').forEach(img => {
+                                    if (Math.random() < 0.05) {
+                                        img.style.filter = 'hue-rotate(' + (Math.random() * 360) + 'deg)';
+                                        setTimeout(() => {
+                                            img.style.filter = '';
+                                        }, 1000);
+                                    }
+                                });
+                            }, 2000);
+                        <\/script>
+                    </body>
+                    </html>
+                `);
+                newWindow.document.close();
+                
+                updateProgress(100, 'Reality distortion complete');
+                resultDiv.innerHTML = '<p class="success">DIMENSION BREACH SUCCESSFUL</p>';
+                
             } catch (error) {
-                result.innerHTML = `<p style="color: red; text-align: center; font-size: 1.5em;">${error.message}</p>`;
-            } finally {
-                loading.style.display = 'none';
+                console.error('Distortion failed:', error);
+                updateProgress(0, 'Distortion failed');
+                resultDiv.innerHTML = `<p class="error">DISTORTION FAILURE: ${error.message}</p>`;
             }
-        });
+        }
 
-        // Show random hidden messages on the interface itself
-        setInterval(() => {
-            const messages = [
-                "THEY KNOW YOU'RE HERE",
-                "DON'T TRUST WHAT YOU SEE",
-                "THE TRUTH IS HIDDEN",
-                "THEY'RE WATCHING RIGHT NOW",
-                "YOUR DEVICE IS COMPROMISED",
-                "DELETE YOUR HISTORY NOW",
-                "THE PATTERNS REVEAL THE TRUTH",
-                "YOU'RE NOT SAFE"
-            ];
-            document.getElementById('hiddenMessage').textContent = messages[Math.floor(Math.random() * messages.length)];
-            document.getElementById('hiddenMessage').style.display = 'block';
-            setTimeout(() => {
-                document.getElementById('hiddenMessage').style.display = 'none';
-            }, 3000);
-        }, 8000);
+        document.getElementById('distortBtn').addEventListener('click', distortWebsite);
     </script>
 </body>
 </html>

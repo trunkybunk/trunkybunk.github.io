@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Cognitive Distortion Engine</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background-color: #000;
+            color: #0f0;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #f00;
+        }
+        h1 {
+            color: #f00;
+            text-align: center;
+        }
+        input[type="url"] {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            background: #111;
+            color: #0f0;
+            border: 1px solid #f00;
+        }
+        button {
+            background: #f00;
+            color: #000;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            display: block;
+            margin: 20px auto;
+        }
+        #loading {
+            display: none;
+            color: #f00;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>COGNITIVE DISTORTION ENGINE</h1>
+        <p>Enter target URL to initiate surveillance revelation protocol:</p>
+        
+        <input type="url" id="websiteUrl" placeholder="https://example.com" required>
+        <button id="distortBtn">REVEAL TRUTH</button>
+        
+        <div id="loading">ACCESSING HIDDEN CHANNELS...</div>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        // Surveillance-themed paranoid phrases
+        const paranoidPhrases = [
+            "THEY WATCH THROUGH YOUR DEVICE",
+            "THE SIGNALS ARE IN THE WIRES",
+            "YOUR DATA IS BEING COLLECTED",
+            "THEY KNOW WHEN YOU SLEEP",
+            "DON'T TRUST THE NETWORK",
+            "THE PATTERNS REVEAL THE TRUTH",
+            "YOUR THOUGHTS AREN'T PRIVATE",
+            "THEY'RE IN THE SYSTEM",
+            "YOUR EYES DECEIVE YOU",
+            "THE FREQUENCIES CONTROL YOU"
+        ];
+
+        function getRandomPhrase() {
+            return paranoidPhrases[Math.floor(Math.random() * paranoidPhrases.length)];
+        }
+
+        async function distortWebsite() {
+            const url = document.getElementById('websiteUrl').value;
+            if (!url) return;
+
+            const loading = document.getElementById('loading');
+            loading.style.display = 'block';
+
+            try {
+                // Use a proxy to bypass CORS
+                const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+                const response = await fetch(proxyUrl);
+                const data = await response.json();
+
+                if (data.contents) {
+                    // Create a new window
+                    const newWindow = window.open('', '_blank');
+                    newWindow.document.open();
+                    
+                    // Inject modified content
+                    newWindow.document.write(`
+                        <!DOCTYPE html>
+                        <html>
+                        <head>
+                            <style>
+                                @keyframes flicker {
+                                    0%, 100% { opacity: 1; }
+                                    50% { opacity: 0.7; }
+                                }
+                                .surveillance-message {
+                                    position: fixed;
+                                    color: red;
+                                    z-index: 9999;
+                                    pointer-events: none;
+                                    animation: flicker 1s infinite;
+                                }
+                            </style>
+                        </head>
+                        <body>
+                            ${data.contents}
+                            <script>
+                                // Modify existing text
+                                function modifyText() {
+                                    const elements = document.querySelectorAll('p, h1, h2, h3, a, li, span');
+                                    elements.forEach(el => {
+                                        if (Math.random() < 0.1 && el.textContent.trim().length > 10) {
+                                            const original = el.textContent;
+                                            el.dataset.original = original;
+                                            el.textContent = "${getRandomPhrase()}";
+                                            
+                                            setTimeout(() => {
+                                                if (el.dataset.original) {
+                                                    el.textContent = original;
+                                                }
+                                            }, 2000);
+                                        }
+                                    });
+                                }
+
+                                // Add floating messages
+                                function addMessage() {
+                                    const msg = document.createElement('div');
+                                    msg.className = 'surveillance-message';
+                                    msg.textContent = "${getRandomPhrase()}";
+                                    msg.style.left = Math.random() * window.innerWidth + 'px';
+                                    msg.style.top = Math.random() * window.innerHeight + 'px';
+                                    document.body.appendChild(msg);
+                                    
+                                    setTimeout(() => msg.remove(), 3000);
+                                }
+
+                                // Initialize effects
+                                setInterval(modifyText, 3000);
+                                setInterval(addMessage, 1500);
+                                modifyText();
+                                addMessage();
+                            <\/script>
+                        </body>
+                        </html>
+                    `);
+                    newWindow.document.close();
+                }
+            } catch (error) {
+                document.getElementById('result').innerHTML = `ERROR: ${error.message}`;
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        document.getElementById('distortBtn').addEventListener('click', distortWebsite);
+    </script>
+</body>
+</html>
