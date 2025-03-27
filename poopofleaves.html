@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>THE HOUSE | OF DIAPERS</title>
+    <style>
+        body {
+            background-color: #111;
+            color: #eee;
+            font-family: 'Courier New', monospace;
+            margin: 0;
+            padding: 2rem;
+            line-height: 1.5;
+            overflow-x: hidden;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            position: relative;
+        }
+        h1 {
+            color: #ff5555;
+            font-size: 3rem;
+            text-align: center;
+            margin-bottom: 0;
+            animation: flicker 5s infinite;
+        }
+        h2 {
+            color: #55aaff;
+            border-bottom: 1px solid #333;
+            padding-bottom: 0.5rem;
+        }
+        p {
+            margin: 1.5rem 0;
+        }
+        .footnote {
+            font-size: 0.8rem;
+            color: #666;
+            cursor: pointer;
+            vertical-align: super;
+        }
+        .footnote:hover {
+            color: #ff5555;
+        }
+        #hidden-text {
+            display: none;
+            color: #55aaff;
+            margin: 1rem 0;
+            border-left: 3px solid #55aaff;
+            padding-left: 1rem;
+            font-style: italic;
+        }
+        .stain {
+            position: fixed;
+            background-color: #8b4513; /* Brown "stain" */
+            opacity: 0.1;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: -1;
+        }
+        .glitch {
+            animation: glitch-effect 1s infinite linear alternate;
+        }
+        @keyframes flicker {
+            0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% { opacity: 1; }
+            20%, 22%, 24%, 55% { opacity: 0.3; }
+        }
+        @keyframes glitch-effect {
+            0% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(2px, -2px); }
+            60% { transform: translate(3px, 1px); }
+            80% { transform: translate(-1px, -3px); }
+            100% { transform: translate(0); }
+        }
+        #nav-button {
+            color: #55aaff;
+            text-decoration: none;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        #nav-button:hover {
+            color: #ff5555;
+        }
+        #secret {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            font-size: 0.7rem;
+            color: #333;
+            cursor: pointer;
+        }
+        #overflow-warning {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: #8b4513;
+            color: white;
+            text-align: center;
+            padding: 1rem;
+            font-weight: bold;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="glitch">THE HOUSE OF DIAPERS</h1>
+        <p><em>This is not for you.<span class="footnote" onclick="toggleHidden()">¹</span></em></p>
+        <div id="hidden-text">
+            <strong>JOHNNY TRUANT (MARGINALIA):</strong> Found this manuscript taped to a changing table. The smell… Christ. It’s growing.
+        </div>
+
+        <h2>1. THE DIAPER IS DEEPER THAN YOU THINK</h2>
+        <p>
+            Measurements confirm: the interior volume exceeds external dimensions by approximately <span id="shifting-number">37</span>%.<span class="footnote" onclick="toggleFootnote()">²</span>
+            <div id="footnote-text" style="display: none; color: #666; font-size: 0.8rem;">
+                <strong>ZAMPANÓ’S NOTE:</strong> See Appendix E: "The Non-Euclidean Geometry of Infant Waste Containment."
+            </div>
+        </p>
+
+        <h2>2. THE WALLS ARE SOFT</h2>
+        <p>
+            They crinkle. They sag. Press your ear against one—you’ll hear <span id="shifting-text">moisture</span>.<br>
+            <a id="nav-button" onclick="triggerOverflow()">[Click to test absorbency]</a>
+        </p>
+
+        <h2>3. THE MINOTAUR’S NURSERY</h2>
+        <p>
+            At the center of the labyrinth, a pile. It’s still warm.<br>
+            <a id="nav-button" onclick="window.location.href='#'">[Do not investigate.]</a>
+        </p>
+
+        <div id="overflow-warning">
+            WARNING: OVERFLOW DETECTED. EVACUATE IMMEDIATELY.
+        </div>
+    </div>
+
+    <div id="secret" onclick="revealSecret()">???</div>
+
+    <script>
+        // Footnote interactions
+        function toggleHidden() {
+            const hiddenText = document.getElementById('hidden-text');
+            hiddenText.style.display = hiddenText.style.display === 'none' ? 'block' : 'none';
+        }
+        function toggleFootnote() {
+            const footnoteText = document.getElementById('footnote-text');
+            footnoteText.style.display = footnoteText.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // Shifting text/number effects
+        const verbs = ["moisture", "giggling", "shifting", "digestion", "regret"];
+        const numbers = ["37", "42", "∞", "6.66", "0"];
+        let counter = 0;
+        setInterval(() => {
+            document.getElementById('shifting-text').textContent = verbs[counter % verbs.length];
+            document.getElementById('shifting-number').textContent = numbers[counter % numbers.length];
+            counter++;
+        }, 2000);
+
+        // Brown "stain" spawner (appears on click)
+        document.addEventListener('click', (e) => {
+            if (e.target.id !== 'nav-button') {
+                const stain = document.createElement('div');
+                stain.className = 'stain';
+                stain.style.width = `${Math.random() * 100 + 50}px`;
+                stain.style.height = stain.style.width;
+                stain.style.left = `${e.clientX - 50}px`;
+                stain.style.top = `${e.clientY - 50}px`;
+                document.body.appendChild(stain);
+                setTimeout(() => stain.remove(), 5000);
+            }
+        });
+
+        // Fake "overflow" disaster
+        function triggerOverflow() {
+            const warning = document.getElementById('overflow-warning');
+            warning.style.display = 'block';
+            document.body.style.backgroundColor = "#3a1f00";
+            setTimeout(() => {
+                warning.textContent = "SYSTEM FAILURE: TOO MUCH MASS.";
+                setTimeout(() => {
+                    warning.textContent = "REBOOTING...";
+                    setTimeout(() => window.location.reload(), 2000);
+                }, 2000);
+            }, 2000);
+        }
+
+        // Secret message
+        function revealSecret() {
+            const secret = document.getElementById('secret');
+            if (secret.textContent === '???') {
+                secret.textContent = 'THE DIAPER WAS NEVER CHANGED.';
+                secret.style.color = "#ff5555";
+                secret.style.fontSize = "1rem";
+            }
+        }
+    </script>
+</body>
+</html>
