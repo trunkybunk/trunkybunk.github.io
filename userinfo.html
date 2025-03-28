@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Information Collector</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #2980b9;
+            margin-top: 30px;
+        }
+        .info-section {
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .info-item {
+            margin-bottom: 8px;
+            display: flex;
+        }
+        .info-label {
+            font-weight: bold;
+            min-width: 200px;
+        }
+        .warning {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        .cookie-list {
+            list-style-type: none;
+            padding: 0;
+        }
+        .cookie-item {
+            background-color: #ecf0f1;
+            padding: 8px;
+            margin-bottom: 5px;
+            border-radius: 3px;
+            word-break: break-all;
+        }
+        #battery-level {
+            height: 20px;
+            background-color: #eee;
+            width: 100px;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        #battery-level-fill {
+            height: 100%;
+            background-color: #2ecc71;
+            width: 0%;
+        }
+    </style>
+</head>
+<body>
+    <h1>User Information Collector</h1>
+    
+    <div class="info-section">
+        <h2>Browser Information</h2>
+        <div class="info-item">
+            <span class="info-label">User Agent:</span>
+            <span id="user-agent"></span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Browser Name:</span>
+            <span id="browser-name"></span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Browser Version:</span>
+            <span id="browser-version"></span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Platform:</span>
+            <span id="platform"></span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Language:</span>
+            <span id="language"></span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Cookies Enabled:</span>
+            <span id="cookies-enabled"></span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Do Not Track:</span>
+            <span id="do-not-track"></span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Online Status:</span>
+            <span id="online-status"></span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Browser Window Size:</span>
+            <span id="window-size"></span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Screen Size:</span>
+            <span id="screen-size"></span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Viewport Size:</span>
+            <span id="viewport-size"></span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Color Depth:</span>
+            <span id="color-depth"></span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Pixel Ratio:</span>
+            <span id="pixel-ratio"></span>
+        </div>
+    </div>
+
+    <div class="info-section">
+        <h2>Device Information</h2>
+        <div class="info-item">
+            <span class="info-label">Device Memory:</span>
+            <span id="device-memory"></span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Hardware Concurrency:</span>
+            <span id="hardware-concurrency"></span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Touch Support:</span>
+            <span id="touch-support"></span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Battery Status:</span>
+            <span id="battery-status"></span>
+            <div id="battery-level"><div id="battery-level-fill"></div></div>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Device Orientation:</span>
+            <span id="device-orientation"></span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Device Motion:</span>
+            <span id="device-motion"></span>
+        </div>
+    </div>
+
+    <div class="info-section">
+        <h2>Connection Information</h2>
+        <div class="info-item">
+            <span class="info-label">Connection Type:</span>
+            <span id="connection-type"></span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Effective Connection Type:</span>
+            <span id="effective-connection"></span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Downlink Speed:</span>
+            <span id="downlink"></span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Round Trip Time:</span>
+            <span id="rtt"></span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Save Data Mode:</span>
+            <span id="save-data"></span>
+        </div>
+    </div>
+
+    <div class="info-section">
+        <h2>Location Information</h2>
+        <div class="info-item">
+            <span class="info-label">Geolocation:</span>
+            <span id="geolocation"></span>
+            <button id="request-geolocation">Request Geolocation</button>
+            <span class="warning">(Requires user permission)</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">IP Address:</span>
+            <span id="ip-address">Loading...</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Timezone:</span>
+            <span id="timezone"></span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Local Time:</span>
+            <span id="local-time"></span>
+        </div>
+    </div>
+
+    <div class="info-section">
+        <h2>Storage Information</h2>
+        <div class="info-item">
+            <span class="info-label">Local Storage:</span>
+            <span id="local-storage"></span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Session Storage:</span>
+            <span id="session-storage"></span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">IndexedDB Support:</span>
+            <span id="indexeddb"></span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">WebSQL Support:</span>
+            <span id="websql"></span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Cache API Support:</span>
+            <span id="cache-api"></span>
+        </div>
+    </div>
+
+    <div class="info-section">
+        <h2>Cookies</h2>
+        <div class="info-item">
+            <span class="info-label">All Cookies:</span>
+            <ul class="cookie-list" id="cookies-list"></ul>
+        </div>
+    </div>
+
+    <div class="info-section">
+        <h2>WebGL Information</h2>
+        <div class="info-item">
+            <span class="info-label">WebGL Vendor:</span>
+            <span id="webgl-vendor"></span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">WebGL Renderer:</span>
+            <span id="webgl-renderer"></span>
+        </div>
+    </div>
+
+    <div class="info-section">
+        <h2>Media Capabilities</h2>
+        <div class="info-item">
+            <span class="info-label">Audio Context:</span>
+            <span id="audio-context"></span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Microphone Access:</span>
+            <span id="microphone"></span>
+            <button id="request-microphone">Test Microphone</button>
+            <span class="warning">(Requires user permission)</span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Camera Access:</span>
+            <span id="camera"></span>
+            <button id="request-camera">Test Camera</button>
+            <span class="warning">(Requires user permission)</span>
+        </div>
+    </div>
+
+    <div class="info-section">
+        <h2>Other Information</h2>
+        <div class="info-item">
+            <span class="info-label">Referrer:</span>
+            <span id="referrer"></span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Page Load Time:</span>
+            <span id="page-load-time"></span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Browser Permissions:</span>
+            <span id="permissions"></span>
+        </div>
+        <div class="info-item">
+            <span class="info-label">Notification Permission:</span>
+            <span id="notification-permission"></span>
+            <button id="request-notification">Request Notification</button>
+        </div>
+    </div>
+
+    <script>
+        // Basic browser info
+        document.getElementById('user-agent').textContent = navigator.userAgent;
+        document.getElementById('platform').textContent = navigator.platform;
+        document.getElementById('language').textContent = navigator.language || navigator.userLanguage;
+        document.getElementById('cookies-enabled').textContent = navigator.cookieEnabled ? 'Yes' : 'No';
+        document.getElementById('do-not-track').textContent = navigator.doNotTrack || 'Not specified';
+        document.getElementById('online-status').textContent = navigator.onLine ? 'Online' : 'Offline';
+        
+        // Parse browser name and version from user agent
+        const ua = navigator.userAgent;
+        let browserName, browserVersion;
+        
+        if (ua.includes('Firefox')) {
+            browserName = 'Firefox';
+            browserVersion = ua.match(/Firefox\/(\d+\.\d+)/)[1];
+        } else if (ua.includes('Chrome')) {
+            browserName = 'Chrome';
+            browserVersion = ua.match(/Chrome\/(\d+\.\d+)/)[1];
+        } else if (ua.includes('Safari')) {
+            browserName = 'Safari';
+            browserVersion = ua.match(/Version\/(\d+\.\d+)/)[1];
+        } else if (ua.includes('Edge')) {
+            browserName = 'Edge';
+            browserVersion = ua.match(/Edge\/(\d+\.\d+)/)[1];
+        } else if (ua.includes('Opera') || ua.includes('OPR')) {
+            browserName = 'Opera';
+            browserVersion = ua.match(/(?:Opera|OPR)\/(\d+\.\d+)/)[1];
+        } else if (ua.includes('MSIE') || ua.includes('Trident')) {
+            browserName = 'Internet Explorer';
+            const match = ua.match(/(?:MSIE |rv:)(\d+\.\d+)/);
+            browserVersion = match ? match[1] : 'Unknown';
+        } else {
+            browserName = 'Unknown';
+            browserVersion = 'Unknown';
+        }
+        
+        document.getElementById('browser-name').textContent = browserName;
+        document.getElementById('browser-version').textContent = browserVersion;
+        
+        // Screen info
+        document.getElementById('window-size').textContent = `${window.innerWidth} × ${window.innerHeight}`;
+        document.getElementById('screen-size').textContent = `${screen.width} × ${screen.height}`;
+        document.getElementById('viewport-size').textContent = `${document.documentElement.clientWidth} × ${document.documentElement.clientHeight}`;
+        document.getElementById('color-depth').textContent = `${screen.colorDepth} bits`;
+        document.getElementById('pixel-ratio').textContent = window.devicePixelRatio || 'Not available';
+        
+        // Device info
+        document.getElementById('hardware-concurrency').textContent = navigator.hardwareConcurrency || 'Not available';
+        document.getElementById('device-memory').textContent = navigator.deviceMemory ? `${navigator.deviceMemory} GB` : 'Not available';
+        document.getElementById('touch-support').textContent = 'ontouchstart' in window ? 'Supported' : 'Not supported';
+        
+        // Battery API (may not be supported in all browsers)
+        if ('getBattery' in navigator) {
+            navigator.getBattery().then(battery => {
+                document.getElementById('battery-status').textContent = `${battery.charging ? 'Charging' : 'Discharging'}`;
+                document.getElementById('battery-level-fill').style.width = `${battery.level * 100}%`;
+                
+                battery.addEventListener('chargingchange', () => {
+                    document.getElementById('battery-status').textContent = `${battery.charging ? 'Charging' : 'Discharging'}`;
+                });
+                
+                battery.addEventListener('levelchange', () => {
+                    document.getElementById('battery-level-fill').style.width = `${battery.level * 100}%`;
+                });
+            });
+        } else {
+            document.getElementById('battery-status').textContent = 'Not supported';
+        }
+        
+        // Device orientation/motion
+        if ('DeviceOrientationEvent' in window) {
+            window.addEventListener('deviceorientation', (event) => {
+                document.getElementById('device-orientation').textContent = 
+                    `Alpha: ${event.alpha.toFixed(2)}, Beta: ${event.beta.toFixed(2)}, Gamma: ${event.gamma.toFixed(2)}`;
+            });
+        } else {
+            document.getElementById('device-orientation').textContent = 'Not supported';
+        }
+        
+        if ('DeviceMotionEvent' in window) {
+            window.addEventListener('devicemotion', (event) => {
+                const acc = event.acceleration;
+                document.getElementById('device-motion').textContent = 
+                    `X: ${acc.x ? acc.x.toFixed(2) : 'N/A'}, Y: ${acc.y ? acc.y.toFixed(2) : 'N/A'}, Z: ${acc.z ? acc.z.toFixed(2) : 'N/A'}`;
+            });
+        } else {
+            document.getElementById('device-motion').textContent = 'Not supported';
+        }
+        
+        // Network info
+        if ('connection' in navigator) {
+            const connection = navigator.connection;
+            document.getElementById('connection-type').textContent = connection.type || 'Unknown';
+            document.getElementById('effective-connection').textContent = connection.effectiveType || 'Unknown';
+            document.getElementById('downlink').textContent = connection.downlink ? `${connection.downlink} Mbps` : 'Unknown';
+            document.getElementById('rtt').textContent = connection.rtt ? `${connection.rtt} ms` : 'Unknown';
+            document.getElementById('save-data').textContent = connection.saveData ? 'Enabled' : 'Disabled';
+        } else {
+            document.getElementById('connection-type').textContent = 'Not supported';
+            document.getElementById('effective-connection').textContent = 'Not supported';
+            document.getElementById('downlink').textContent = 'Not supported';
+            document.getElementById('rtt').textContent = 'Not supported';
+            document.getElementById('save-data').textContent = 'Not supported';
+        }
+        
+        // Location info
+        document.getElementById('timezone').textContent = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        document.getElementById('local-time').textContent = new Date().toString();
+        
+        document.getElementById('request-geolocation').addEventListener('click', () => {
+            if ('geolocation' in navigator) {
+                navigator.geolocation.getCurrentPosition(
+                    position => {
+                        document.getElementById('geolocation').textContent = 
+                            `Lat: ${position.coords.latitude}, Long: ${position.coords.longitude}, Accuracy: ${position.coords.accuracy}m`;
+                    },
+                    error => {
+                        document.getElementById('geolocation').textContent = `Error: ${error.message}`;
+                    }
+                );
+            } else {
+                document.getElementById('geolocation').textContent = 'Geolocation not supported';
+            }
+        });
+        
+        // Get IP address (using a third-party service)
+        fetch('https://api.ipify.org?format=json')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('ip-address').textContent = data.ip;
+            })
+            .catch(() => {
+                document.getElementById('ip-address').textContent = 'Could not determine IP address';
+            });
+        
+        // Storage info
+        document.getElementById('local-storage').textContent = 'localStorage' in window ? 'Supported' : 'Not supported';
+        document.getElementById('session-storage').textContent = 'sessionStorage' in window ? 'Supported' : 'Not supported';
+        document.getElementById('indexeddb').textContent = 'indexedDB' in window ? 'Supported' : 'Not supported';
+        document.getElementById('websql').textContent = 'openDatabase' in window ? 'Supported' : 'Not supported';
+        document.getElementById('cache-api').textContent = 'caches' in window ? 'Supported' : 'Not supported';
+        
+        // Cookies
+        if (document.cookie) {
+            const cookies = document.cookie.split(';');
+            const cookiesList = document.getElementById('cookies-list');
+            
+            cookies.forEach(cookie => {
+                const li = document.createElement('li');
+                li.className = 'cookie-item';
+                li.textContent = cookie.trim();
+                cookiesList.appendChild(li);
+            });
+        } else {
+            document.getElementById('cookies-list').innerHTML = '<li>No cookies found</li>';
+        }
+        
+        // WebGL info
+        const canvas = document.createElement('canvas');
+        const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+        
+        if (gl) {
+            const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+            if (debugInfo) {
+                document.getElementById('webgl-vendor').textContent = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
+                document.getElementById('webgl-renderer').textContent = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+            } else {
+                document.getElementById('webgl-vendor').textContent = 'Vendor info not available';
+                document.getElementById('webgl-renderer').textContent = 'Renderer info not available';
+            }
+        } else {
+            document.getElementById('webgl-vendor').textContent = 'WebGL not supported';
+            document.getElementById('webgl-renderer').textContent = 'WebGL not supported';
+        }
+        
+        // Media capabilities
+        document.getElementById('audio-context').textContent = 'AudioContext' in window ? 'Supported' : 'Not supported';
+        
+        document.getElementById('request-microphone').addEventListener('click', () => {
+            if ('mediaDevices' in navigator && 'getUserMedia' in navigator.mediaDevices) {
+                navigator.mediaDevices.getUserMedia({ audio: true })
+                    .then(stream => {
+                        document.getElementById('microphone').textContent = 'Access granted';
+                        stream.getTracks().forEach(track => track.stop());
+                    })
+                    .catch(error => {
+                        document.getElementById('microphone').textContent = `Error: ${error.message}`;
+                    });
+            } else {
+                document.getElementById('microphone').textContent = 'Not supported';
+            }
+        });
+        
+        document.getElementById('request-camera').addEventListener('click', () => {
+            if ('mediaDevices' in navigator && 'getUserMedia' in navigator.mediaDevices) {
+                navigator.mediaDevices.getUserMedia({ video: true })
+                    .then(stream => {
+                        document.getElementById('camera').textContent = 'Access granted';
+                        stream.getTracks().forEach(track => track.stop());
+                    })
+                    .catch(error => {
+                        document.getElementById('camera').textContent = `Error: ${error.message}`;
+                    });
+            } else {
+                document.getElementById('camera').textContent = 'Not supported';
+            }
+        });
+        
+        // Other info
+        document.getElementById('referrer').textContent = document.referrer || 'No referrer';
+        
+        // Page load time
+        window.addEventListener('load', () => {
+            const now = new Date().getTime();
+            const pageLoadTime = now - performance.timing.navigationStart;
+            document.getElementById('page-load-time').textContent = `${pageLoadTime} ms`;
+        });
+        
+        // Permissions
+        if ('permissions' in navigator) {
+            navigator.permissions.query({ name: 'geolocation' }).then(permissionStatus => {
+                document.getElementById('permissions').textContent = `Geolocation: ${permissionStatus.state}`;
+            });
+        } else {
+            document.getElementById('permissions').textContent = 'Permissions API not supported';
+        }
+        
+        // Notification permission
+        document.getElementById('notification-permission').textContent = Notification.permission;
+        
+        document.getElementById('request-notification').addEventListener('click', () => {
+            Notification.requestPermission().then(permission => {
+                document.getElementById('notification-permission').textContent = permission;
+            });
+        });
+    </script>
+</body>
+</html>
