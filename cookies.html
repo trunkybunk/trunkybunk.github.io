@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tracking Cookies Demonstration</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+        }
+        h1, h2 {
+            color: #2c3e50;
+        }
+        .consent-banner {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .btn {
+            padding: 8px 15px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .btn-accept {
+            background-color: #28a745;
+            color: white;
+        }
+        .btn-reject {
+            background-color: #dc3545;
+            color: white;
+        }
+        .visit-data {
+            background-color: #f0f8ff;
+            padding: 10px;
+            margin: 10px 0;
+            border-left: 4px solid #3498db;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+        .data-table th, .data-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .data-table th {
+            background-color: #f2f2f2;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Tracking Cookies Demonstration</h1>
+    
+    <div id="consent-banner" class="consent-banner">
+        <h2>Cookie Consent</h2>
+        <p>This website uses cookies to track your visits, location, and device information to demonstrate tracking technology. Do you consent to this tracking?</p>
+        <button id="accept-btn" class="btn btn-accept">Accept</button>
+        <button id="reject-btn" class="btn btn-reject">Reject</button>
+    </div>
+    
+    <div id="content" class="hidden">
+        <h2>Your Visit Information</h2>
+        <div id="current-visit" class="visit-data">
+            <h3>Current Visit</h3>
+            <table class="data-table">
+                <tr>
+                    <th>Information Type</th>
+                    <th>Value</th>
+                </tr>
+                <tr>
+                    <td>Timestamp</td>
+                    <td id="current-timestamp"></td>
+                </tr>
+                <tr>
+                    <td>Device Type</td>
+                    <td id="current-device"></td>
+                </tr>
+                <tr>
+                    <td>Location</td>
+                    <td id="current-location"></td>
+                </tr>
+                <tr>
+                    <td>Posture</td>
+                    <td id="current-posture"></td>
+                </tr>
+                <tr>
+                    <td>Movement</td>
+                    <td id="current-movement"></td>
+                </tr>
+                <tr>
+                    <td>IP Address</td>
+                    <td id="current-ip"></td>
+                </tr>
+                <tr>
+                    <td>Browser</td>
+                    <td id="current-browser"></td>
+                </tr>
+                <tr>
+                    <td>Screen Resolution</td>
+                    <td id="current-resolution"></td>
+                </tr>
+            </table>
+        </div>
+        
+        <h2>Previous Visits</h2>
+        <div id="previous-visits"></div>
+        
+        <button id="clear-btn" class="btn">Clear All Tracking Data</button>
+    </div>
+    
+    <script>
+        // DOM elements
+        const consentBanner = document.getElementById('consent-banner');
+        const content = document.getElementById('content');
+        const acceptBtn = document.getElementById('accept-btn');
+        const rejectBtn = document.getElementById('reject-btn');
+        const clearBtn = document.getElementById('clear-btn');
+        
+        // Check if consent has already been given
+        const hasConsent = getCookie('tracking_consent') === 'true';
+        
+        if (hasConsent) {
+            consentBanner.style.display = 'none';
+            content.classList.remove('hidden');
+            trackVisit();
+        }
+        
+        // Event listeners
+        acceptBtn.addEventListener('click', () => {
+            setCookie('tracking_consent', 'true', 365);
+            consentBanner.style.display = 'none';
+            content.classList.remove('hidden');
+            trackVisit();
+        });
+        
+        rejectBtn.addEventListener('click', () => {
+            setCookie('tracking_consent', 'false', 365);
+            consentBanner.style.display = 'none';
+            alert('You have opted out of tracking. Some features may not work.');
+        });
+        
+        clearBtn.addEventListener('click', () => {
+            clearTrackingData();
+            location.reload();
+        });
+        
+        // Cookie functions
+        function setCookie(name, value, days) {
+            const date = new Date();
+            date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+            const expires = "expires=" + date.toUTCString();
+            document.cookie = name + "=" + value + ";" + expires + ";path=/";
+        }
+        
+        function getCookie(name) {
+            const cookieName = name + "=";
+            const decodedCookie = decodeURIComponent(document.cookie);
+            const cookieArray = decodedCookie.split(';');
+            
+            for (let i = 0; i < cookieArray.length; i++) {
+                let cookie = cookieArray[i];
+                while (cookie.charAt(0) === ' ') {
+                    cookie = cookie.substring(1);
+                }
+                if (cookie.indexOf(cookieName) === 0) {
+                    return cookie.substring(cookieName.length, cookie.length);
+                }
+            }
+            return "";
+        }
+        
+        function deleteCookie(name) {
+            document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+        }
+        
+        function clearTrackingData() {
+            // Delete all tracking cookies
+            deleteCookie('tracking_consent');
+            deleteCookie('visits_data');
+            deleteCookie('current_visit');
+            
+            // Clear any other tracking-related cookies
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i];
+                const eqPos = cookie.indexOf('=');
+                const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
+                deleteCookie(name.trim());
+            }
+        }
+        
+        // Tracking functions
+        async function trackVisit() {
+            // Get basic device info
+            const deviceInfo = getDeviceInfo();
+            const timestamp = new Date().toISOString();
+            
+            // Initialize visit data object
+            const visitData = {
+                timestamp: timestamp,
+                deviceType: deviceInfo.deviceType,
+                browser: deviceInfo.browser,
+                screenResolution: deviceInfo.screenResolution,
+                ipAddress: 'Unknown', // Will be updated if we get it
+                location: 'Unknown', // Will be updated if we get permission
+                posture: 'Unknown', // Will be updated for mobile devices
+                movement: 'Unknown' // Will be updated for mobile devices
+            };
+            
+            // Try to get IP address (this will be approximate)
+            try {
+                const ipResponse = await fetch('https://api.ipify.org?format=json');
+                const ipData = await ipResponse.json();
+                visitData.ipAddress = ipData.ip;
+            } catch (error) {
+                console.log('Could not get IP address:', error);
+            }
+            
+            // Try to get geolocation if permitted
+            if (navigator.geolocation) {
+                try {
+                    const position = await new Promise((resolve, reject) => {
+                        navigator.geolocation.getCurrentPosition(resolve, reject);
+                    });
+                    
+                    visitData.location = {
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude,
+                        accuracy: position.coords.accuracy + ' meters'
+                    };
+                } catch (error) {
+                    console.log('Geolocation error:', error.message);
+                }
+            }
+            
+            // Mobile device specific tracking
+            if (deviceInfo.isMobile) {
+                // Device orientation (for posture)
+                if (window.DeviceOrientationEvent) {
+                    window.addEventListener('deviceorientation', (event) => {
+                        const beta = event.beta; // -180 to 180 (front-to-back tilt)
+                        
+                        if (beta > 45 && beta < 135) {
+                            visitData.posture = 'Laying down (screen up)';
+                        } else if (beta < -45 && beta > -135) {
+                            visitData.posture = 'Laying down (screen down)';
+                        } else if (Math.abs(beta) < 45) {
+                            // Check gamma to determine if it's portrait or landscape
+                            if (Math.abs(event.gamma) < 45) {
+                                visitData.posture = 'Standing or sitting upright';
+                            } else {
+                                visitData.posture = 'Holding sideways';
+                            }
+                        }
+                    }, { once: true });
+                }
+                
+                // Device motion (for movement)
+                if (window.DeviceMotionEvent) {
+                    window.addEventListener('devicemotion', (event) => {
+                        const acceleration = event.acceleration;
+                        const accelerationIncludingGravity = event.accelerationIncludingGravity;
+                        
+                        if (acceleration && accelerationIncludingGravity) {
+                            // Calculate total acceleration (excluding gravity)
+                            const totalAcceleration = Math.sqrt(
+                                Math.pow(acceleration.x, 2) + 
+                                Math.pow(acceleration.y, 2) + 
+                                Math.pow(acceleration.z, 2)
+                            );
+                            
+                            if (totalAcceleration < 0.5) {
+                                visitData.movement = 'Stationary';
+                            } else if (totalAcceleration < 3) {
+                                visitData.movement = 'Walking';
+                            } else {
+                                visitData.movement = 'Driving or in vehicle';
+                            }
+                        }
+                    }, { once: true });
+                }
+            }
+            
+            // Store current visit data in a cookie (temporarily)
+            setCookie('current_visit', JSON.stringify(visitData), 1);
+            
+            // Add to visit history
+            let visits = [];
+            const visitsCookie = getCookie('visits_data');
+            if (visitsCookie) {
+                visits = JSON.parse(visitsCookie);
+            }
+            
+            visits.push(visitData);
+            setCookie('visits_data', JSON.stringify(visits), 365);
+            
+            // Update the display
+            updateDisplay(visitData, visits);
+        }
+        
+        function getDeviceInfo() {
+            const userAgent = navigator.userAgent;
+            let deviceType = 'Desktop';
+            let browser = 'Unknown';
+            
+            // Detect device type
+            if (/Mobi|Android|iPhone|iPad|iPod/i.test(userAgent)) {
+                deviceType = 'Mobile';
+                if (/iPhone|iPad|iPod/i.test(userAgent)) {
+                    deviceType = 'iOS Device';
+                } else if (/Android/i.test(userAgent)) {
+                    deviceType = 'Android Device';
+                }
+            } else if (/Tablet|iPad/i.test(userAgent)) {
+                deviceType = 'Tablet';
+            }
+            
+            // Detect browser
+            if (userAgent.indexOf('Firefox') > -1) {
+                browser = 'Firefox';
+            } else if (userAgent.indexOf('Safari') > -1 && userAgent.indexOf('Chrome') === -1) {
+                browser = 'Safari';
+            } else if (userAgent.indexOf('Chrome') > -1 && userAgent.indexOf('Edg') === -1) {
+                browser = 'Chrome';
+            } else if (userAgent.indexOf('Edg') > -1) {
+                browser = 'Edge';
+            } else if (userAgent.indexOf('Opera') > -1 || userAgent.indexOf('OPR') > -1) {
+                browser = 'Opera';
+            } else if (userAgent.indexOf('Trident') > -1) {
+                browser = 'Internet Explorer';
+            }
+            
+            return {
+                deviceType: deviceType,
+                browser: browser,
+                screenResolution: `${window.screen.width} × ${window.screen.height}`,
+                isMobile: /Mobi|Android|iPhone|iPad|iPod/i.test(userAgent)
+            };
+        }
+        
+        function updateDisplay(currentVisit, previousVisits) {
+            // Display current visit data
+            document.getElementById('current-timestamp').textContent = currentVisit.timestamp;
+            document.getElementById('current-device').textContent = currentVisit.deviceType;
+            document.getElementById('current-browser').textContent = currentVisit.browser;
+            document.getElementById('current-resolution').textContent = currentVisit.screenResolution;
+            document.getElementById('current-ip').textContent = currentVisit.ipAddress;
+            
+            // Display location
+            if (typeof currentVisit.location === 'object') {
+                document.getElementById('current-location').textContent = 
+                    `Lat: ${currentVisit.location.latitude}, Long: ${currentVisit.location.longitude} (±${currentVisit.location.accuracy})`;
+            } else {
+                document.getElementById('current-location').textContent = currentVisit.location;
+            }
+            
+            // Display posture and movement
+            document.getElementById('current-posture').textContent = currentVisit.posture;
+            document.getElementById('current-movement').textContent = currentVisit.movement;
+            
+            // Display previous visits (excluding current one)
+            const previousVisitsContainer = document.getElementById('previous-visits');
+            previousVisitsContainer.innerHTML = '';
+            
+            if (previousVisits.length <= 1) {
+                previousVisitsContainer.innerHTML = '<p>No previous visits recorded.</p>';
+                return;
+            }
+            
+            // Sort visits by timestamp (newest first)
+            const sortedVisits = [...previousVisits]
+                .filter(visit => visit.timestamp !== currentVisit.timestamp)
+                .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            
+            sortedVisits.forEach((visit, index) => {
+                const visitElement = document.createElement('div');
+                visitElement.className = 'visit-data';
+                visitElement.innerHTML = `
+                    <h3>Visit ${sortedVisits.length - index} - ${new Date(visit.timestamp).toLocaleString()}</h3>
+                    <table class="data-table">
+                        <tr>
+                            <th>Information Type</th>
+                            <th>Value</th>
+                        </tr>
+                        <tr>
+                            <td>Device Type</td>
+                            <td>${visit.deviceType}</td>
+                        </tr>
+                        <tr>
+                            <td>Location</td>
+                            <td>${
+                                typeof visit.location === 'object' 
+                                    ? `Lat: ${visit.location.latitude}, Long: ${visit.location.longitude} (±${visit.location.accuracy})`
+                                    : visit.location
+                            }</td>
+                        </tr>
+                        <tr>
+                            <td>Posture</td>
+                            <td>${visit.posture}</td>
+                        </tr>
+                        <tr>
+                            <td>Movement</td>
+                            <td>${visit.movement}</td>
+                        </tr>
+                        <tr>
+                            <td>IP Address</td>
+                            <td>${visit.ipAddress}</td>
+                        </tr>
+                        <tr>
+                            <td>Browser</td>
+                            <td>${visit.browser}</td>
+                        </tr>
+                        <tr>
+                            <td>Screen Resolution</td>
+                            <td>${visit.screenResolution}</td>
+                        </tr>
+                    </table>
+                `;
+                previousVisitsContainer.appendChild(visitElement);
+            });
+        }
+    </script>
+</body>
+</html>
