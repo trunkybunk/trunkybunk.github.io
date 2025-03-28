@@ -13,12 +13,15 @@
             touch-action: none;
             font-family: Arial, sans-serif;
             color: white;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
         }
         
-        #game-container {
+        #game-wrapper {
+            flex: 1;
             position: relative;
-            width: 100vw;
-            height: 100vh;
+            overflow: hidden;
         }
         
         #game-canvas {
@@ -36,53 +39,41 @@
             padding: 5px 10px;
             border-radius: 5px;
             font-size: 12px;
+            z-index: 10;
         }
         
-        #controls {
-            position: absolute;
-            bottom: 10px;
-            left: 10px;
-            right: 10px;
-            background-color: rgba(0, 0, 0, 0.5);
-            padding: 5px 10px;
-            border-radius: 5px;
-            font-size: 12px;
-            text-align: center;
+        /* Controls container at bottom */
+        #controls-container {
+            height: 150px;
+            background-color: #111;
+            display: flex;
+            justify-content: space-between;
+            padding: 20px;
+            box-sizing: border-box;
         }
         
-        /* On-screen controls */
-        .control-container {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-        }
-        
-        .movement-controls {
-            position: absolute;
-            bottom: 100px;
-            left: 30px;
+        /* D-pad styles */
+        .dpad {
             width: 120px;
             height: 120px;
-            pointer-events: auto;
-        }
-        
-        .look-controls {
-            position: absolute;
-            bottom: 100px;
-            right: 30px;
-            width: 120px;
-            height: 120px;
-            pointer-events: auto;
-        }
-        
-        .control-dpad {
             position: relative;
-            width: 100%;
-            height: 100%;
+            background-color: rgba(0, 0, 0, 0.3);
+            border-radius: 60px;
+            border: 2px solid rgba(255, 255, 255, 0.5);
         }
         
-        .control-btn {
+        .dpad-center {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background-color: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        .dpad-btn {
             position: absolute;
             width: 40px;
             height: 40px;
@@ -93,91 +84,84 @@
             align-items: center;
             color: white;
             font-weight: bold;
-            pointer-events: auto;
             user-select: none;
+            border: 2px solid rgba(255, 255, 255, 0.5);
         }
         
-        .control-btn:active {
+        .dpad-btn:active {
             background-color: rgba(255, 255, 255, 0.6);
         }
         
-        .btn-up {
-            top: 0;
+        .dpad-up {
+            top: 5px;
             left: 50%;
             transform: translateX(-50%);
         }
         
-        .btn-down {
-            bottom: 0;
+        .dpad-down {
+            bottom: 5px;
             left: 50%;
             transform: translateX(-50%);
         }
         
-        .btn-left {
-            left: 0;
+        .dpad-left {
+            left: 5px;
             top: 50%;
             transform: translateY(-50%);
         }
         
-        .btn-right {
-            right: 0;
+        .dpad-right {
+            right: 5px;
             top: 50%;
             transform: translateY(-50%);
-        }
-        
-        .btn-center {
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
         }
         
         /* Mobile specific optimizations */
         @media (max-width: 600px) {
-            .movement-controls, .look-controls {
-                bottom: 60px;
+            #controls-container {
+                height: 120px;
+                padding: 15px;
+            }
+            
+            .dpad {
                 width: 100px;
                 height: 100px;
             }
             
-            .control-btn {
-                width: 35px;
-                height: 35px;
+            .dpad-btn, .dpad-center {
+                width: 30px;
+                height: 30px;
                 font-size: 12px;
             }
         }
     </style>
 </head>
 <body>
-    <div id="game-container">
+    <!-- Game view at top -->
+    <div id="game-wrapper">
         <canvas id="game-canvas"></canvas>
         <div id="info-panel">
-            FPS: <span id="fps-counter">0</span> | 
-            Pos: <span id="position">0,0</span> | 
-            Angle: <span id="angle">0</span>
+            POS: <span id="position">0,0</span> | 
+            ANGLE: <span id="angle">0</span>
         </div>
-        <div id="controls">
-            Touch the screen to look around | Use on-screen controls to move
+    </div>
+    
+    <!-- Controls at bottom -->
+    <div id="controls-container">
+        <!-- Movement D-pad -->
+        <div class="dpad">
+            <div class="dpad-btn dpad-up" id="btn-forward">↑</div>
+            <div class="dpad-btn dpad-down" id="btn-backward">↓</div>
+            <div class="dpad-btn dpad-left" id="btn-strafe-left">←</div>
+            <div class="dpad-btn dpad-right" id="btn-strafe-right">→</div>
+            <div class="dpad-center"></div>
         </div>
         
-        <!-- On-screen controls -->
-        <div class="control-container">
-            <div class="movement-controls">
-                <div class="control-dpad">
-                    <div class="control-btn btn-up" id="btn-forward">↑</div>
-                    <div class="control-btn btn-down" id="btn-backward">↓</div>
-                    <div class="control-btn btn-left" id="btn-left">←</div>
-                    <div class="control-btn btn-right" id="btn-right">→</div>
-                </div>
-            </div>
-            
-            <div class="look-controls">
-                <div class="control-dpad">
-                    <div class="control-btn btn-up" id="btn-look-up">↑</div>
-                    <div class="control-btn btn-down" id="btn-look-down">↓</div>
-                    <div class="control-btn btn-left" id="btn-look-left">←</div>
-                    <div class="control-btn btn-right" id="btn-look-right">→</div>
-                </div>
-            </div>
+        <!-- Look D-pad -->
+        <div class="dpad">
+            <div class="dpad-btn dpad-left" id="btn-look-left">↶</div>
+            <div class="dpad-btn dpad-right" id="btn-look-right">↷</div>
+            <div class="dpad-center"></div>
         </div>
     </div>
 
@@ -186,10 +170,11 @@
         const canvas = document.getElementById('game-canvas');
         const ctx = canvas.getContext('2d');
         
-        // Set canvas size to full window
+        // Set canvas size to fit available space
         function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
+            const gameWrapper = document.getElementById('game-wrapper');
+            canvas.width = gameWrapper.clientWidth;
+            canvas.height = gameWrapper.clientHeight;
         }
         resizeCanvas();
         window.addEventListener('resize', resizeCanvas);
@@ -198,11 +183,9 @@
         const FOV = Math.PI / 3; // 60 degrees
         const HALF_FOV = FOV / 2;
         const NUM_RAYS = Math.min(320, Math.floor(canvas.width / 2)); // Adjust based on screen width
-        const MAX_DEPTH = 16;
         const CELL_SIZE = 64;
-        const WALL_HEIGHT = 100;
-        const PLAYER_SPEED = 2; // Reduced from 5 for mobile
-        const ROTATION_SPEED = 0.03; // Reduced from 0.05 for mobile
+        const PLAYER_SPEED = 2; // Reduced for mobile
+        const ROTATION_SPEED = 0.03; // Reduced for mobile
         
         // Game map (1 = wall, 0 = empty space)
         const MAP = [
@@ -228,11 +211,10 @@
             angle: Math.PI / 4,
             speed: 0,
             strafeSpeed: 0,
-            rotationSpeed: 0,
-            lookUpDown: 0
+            rotationSpeed: 0
         };
         
-        // Textures (simple colored walls for this demo)
+        // Textures (simple colored walls)
         const wallTextures = [
             {color: '#FF0000', darkColor: '#800000'},  // Red wall
             {color: '#00FF00', darkColor: '#008000'},  // Green wall
@@ -248,90 +230,44 @@
         const controls = {
             forward: false,
             backward: false,
-            left: false,
-            right: false,
+            strafeLeft: false,
+            strafeRight: false,
             lookLeft: false,
-            lookRight: false,
-            lookUp: false,
-            lookDown: false
+            lookRight: false
         };
-        
-        // Touch control
-        let touchStartX = 0;
-        let touchStartY = 0;
-        let touchMoveX = 0;
-        let touchMoveY = 0;
-        let isTouching = false;
-        
-        // Performance tracking
-        let lastTime = 0;
-        let fps = 0;
         
         // Set up control buttons
         function setupControls() {
             // Movement buttons
-            document.getElementById('btn-forward').addEventListener('touchstart', () => controls.forward = true);
-            document.getElementById('btn-forward').addEventListener('touchend', () => controls.forward = false);
-            document.getElementById('btn-forward').addEventListener('mousedown', () => controls.forward = true);
-            document.getElementById('btn-forward').addEventListener('mouseup', () => controls.forward = false);
+            const addButtonListeners = (id, control) => {
+                const btn = document.getElementById(id);
+                btn.addEventListener('touchstart', (e) => {
+                    controls[control] = true;
+                    e.preventDefault();
+                });
+                btn.addEventListener('touchend', () => {
+                    controls[control] = false;
+                });
+                btn.addEventListener('mousedown', () => {
+                    controls[control] = true;
+                });
+                btn.addEventListener('mouseup', () => {
+                    controls[control] = false;
+                });
+            };
             
-            document.getElementById('btn-backward').addEventListener('touchstart', () => controls.backward = true);
-            document.getElementById('btn-backward').addEventListener('touchend', () => controls.backward = false);
-            document.getElementById('btn-backward').addEventListener('mousedown', () => controls.backward = true);
-            document.getElementById('btn-backward').addEventListener('mouseup', () => controls.backward = false);
+            addButtonListeners('btn-forward', 'forward');
+            addButtonListeners('btn-backward', 'backward');
+            addButtonListeners('btn-strafe-left', 'strafeLeft');
+            addButtonListeners('btn-strafe-right', 'strafeRight');
+            addButtonListeners('btn-look-left', 'lookLeft');
+            addButtonListeners('btn-look-right', 'lookRight');
             
-            document.getElementById('btn-left').addEventListener('touchstart', () => controls.left = true);
-            document.getElementById('btn-left').addEventListener('touchend', () => controls.left = false);
-            document.getElementById('btn-left').addEventListener('mousedown', () => controls.left = true);
-            document.getElementById('btn-left').addEventListener('mouseup', () => controls.left = false);
-            
-            document.getElementById('btn-right').addEventListener('touchstart', () => controls.right = true);
-            document.getElementById('btn-right').addEventListener('touchend', () => controls.right = false);
-            document.getElementById('btn-right').addEventListener('mousedown', () => controls.right = true);
-            document.getElementById('btn-right').addEventListener('mouseup', () => controls.right = false);
-            
-            // Look buttons
-            document.getElementById('btn-look-left').addEventListener('touchstart', () => controls.lookLeft = true);
-            document.getElementById('btn-look-left').addEventListener('touchend', () => controls.lookLeft = false);
-            document.getElementById('btn-look-left').addEventListener('mousedown', () => controls.lookLeft = true);
-            document.getElementById('btn-look-left').addEventListener('mouseup', () => controls.lookLeft = false);
-            
-            document.getElementById('btn-look-right').addEventListener('touchstart', () => controls.lookRight = true);
-            document.getElementById('btn-look-right').addEventListener('touchend', () => controls.lookRight = false);
-            document.getElementById('btn-look-right').addEventListener('mousedown', () => controls.lookRight = true);
-            document.getElementById('btn-look-right').addEventListener('mouseup', () => controls.lookRight = false);
-            
-            document.getElementById('btn-look-up').addEventListener('touchstart', () => controls.lookUp = true);
-            document.getElementById('btn-look-up').addEventListener('touchend', () => controls.lookUp = false);
-            document.getElementById('btn-look-up').addEventListener('mousedown', () => controls.lookUp = true);
-            document.getElementById('btn-look-up').addEventListener('mouseup', () => controls.lookUp = false);
-            
-            document.getElementById('btn-look-down').addEventListener('touchstart', () => controls.lookDown = true);
-            document.getElementById('btn-look-down').addEventListener('touchend', () => controls.lookDown = false);
-            document.getElementById('btn-look-down').addEventListener('mousedown', () => controls.lookDown = true);
-            document.getElementById('btn-look-down').addEventListener('mouseup', () => controls.lookDown = false);
-            
-            // Touch controls for looking around
-            canvas.addEventListener('touchstart', (e) => {
-                isTouching = true;
-                touchStartX = e.touches[0].clientX;
-                touchStartY = e.touches[0].clientY;
-                e.preventDefault();
-            });
-            
-            canvas.addEventListener('touchmove', (e) => {
-                if (!isTouching) return;
-                touchMoveX = e.touches[0].clientX - touchStartX;
-                touchMoveY = e.touches[0].clientY - touchStartY;
-                touchStartX = e.touches[0].clientX;
-                touchStartY = e.touches[0].clientY;
-                e.preventDefault();
-            });
-            
-            canvas.addEventListener('touchend', () => {
-                isTouching = false;
-                touchMoveX = 0;
-                touchMoveY = 0;
+            // Prevent touch events from propagating
+            document.querySelectorAll('.dpad, .dpad-btn').forEach(el => {
+                el.addEventListener('touchmove', (e) => {
+                    e.preventDefault();
+                }, { passive: false });
             });
         }
         
@@ -343,12 +279,6 @@
         
         // Game loop
         function gameLoop(timestamp) {
-            // Calculate FPS
-            if (lastTime) {
-                fps = Math.round(1000 / (timestamp - lastTime));
-            }
-            lastTime = timestamp;
-            
             // Update player movement
             updatePlayer();
             
@@ -360,7 +290,6 @@
             render3DView();
             
             // Update info panel
-            document.getElementById('fps-counter').textContent = fps;
             document.getElementById('position').textContent = 
                 `${Math.round(player.x)}, ${Math.round(player.y)}`;
             document.getElementById('angle').textContent = 
@@ -376,18 +305,8 @@
                 player.rotationSpeed = -ROTATION_SPEED;
             } else if (controls.lookRight) {
                 player.rotationSpeed = ROTATION_SPEED;
-            } else if (isTouching) {
-                player.rotationSpeed = -touchMoveX * 0.01;
-                player.lookUpDown = Math.max(-50, Math.min(50, player.lookUpDown - touchMoveY * 0.1));
             } else {
                 player.rotationSpeed = 0;
-            }
-            
-            // Handle look up/down buttons
-            if (controls.lookUp) {
-                player.lookUpDown = Math.max(-50, player.lookUpDown - 1);
-            } else if (controls.lookDown) {
-                player.lookUpDown = Math.min(50, player.lookUpDown + 1);
             }
             
             // Update player angle
@@ -398,7 +317,6 @@
             if (player.angle > Math.PI * 2) player.angle -= Math.PI * 2;
             
             // Handle movement
-            const moveAngle = controls.left || controls.right ? player.angle + Math.PI / 2 : player.angle;
             player.speed = 0;
             player.strafeSpeed = 0;
             
@@ -408,17 +326,20 @@
                 player.speed = -PLAYER_SPEED;
             }
             
-            if (controls.left) {
+            if (controls.strafeLeft) {
                 player.strafeSpeed = -PLAYER_SPEED;
-            } else if (controls.right) {
+            } else if (controls.strafeRight) {
                 player.strafeSpeed = PLAYER_SPEED;
             }
             
             // Calculate new position
-            const newX = player.x + Math.cos(player.angle) * player.speed + 
-                         Math.cos(moveAngle) * player.strafeSpeed;
-            const newY = player.y + Math.sin(player.angle) * player.speed + 
-                         Math.sin(moveAngle) * player.strafeSpeed;
+            const moveX = Math.cos(player.angle) * player.speed + 
+                         Math.cos(player.angle + Math.PI/2) * player.strafeSpeed;
+            const moveY = Math.sin(player.angle) * player.speed + 
+                         Math.sin(player.angle + Math.PI/2) * player.strafeSpeed;
+            
+            const newX = player.x + moveX;
+            const newY = player.y + moveY;
             
             // Check for collisions
             if (!isWall(newX, player.y)) {
@@ -461,18 +382,11 @@
                 
                 // Calculate wall height
                 const distance = rayResult.distance * Math.cos(rayAngle - player.angle);
-                let wallHeight = (CELL_SIZE * canvas.height) / distance;
-                
-                // Apply look up/down effect
-                wallHeight = wallHeight * (1 + player.lookUpDown / 100);
-                let wallTop = (canvas.height - wallHeight) / 2 + player.lookUpDown;
-                let wallBottom = wallTop + wallHeight;
-                
-                // Ensure wall stays within bounds
-                wallTop = Math.max(0, wallTop);
-                wallBottom = Math.min(canvas.height, wallBottom);
+                const wallHeight = (CELL_SIZE * canvas.height) / distance;
                 
                 // Draw wall slice
+                const wallTop = (canvas.height - wallHeight) / 2;
+                const wallBottom = wallTop + wallHeight;
                 const wallX = (canvas.width / NUM_RAYS) * ray;
                 const wallWidth = canvas.width / NUM_RAYS;
                 
@@ -483,7 +397,7 @@
                     wallTextures[textureIndex].color;
                 
                 ctx.fillStyle = wallColor;
-                ctx.fillRect(wallX, wallTop, wallWidth + 1, wallBottom - wallTop);
+                ctx.fillRect(wallX, wallTop, wallWidth + 1, wallHeight);
             }
         }
         
