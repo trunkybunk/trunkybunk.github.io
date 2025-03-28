@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mobile Raycaster</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #000;
+            touch-action: none;
+            font-family: Arial, sans-serif;
+            color: white;
+        }
+        
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        #game-canvas {
+            display: block;
+            background-color: #000;
+            width: 100%;
+            height: 100%;
+        }
+        
+        #info-panel {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+        }
+        
+        #controls {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            right: 10px;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            text-align: center;
+        }
+        
+        /* On-screen controls */
+        .control-container {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        
+        .movement-controls {
+            position: absolute;
+            bottom: 100px;
+            left: 30px;
+            width: 120px;
+            height: 120px;
+            pointer-events: auto;
+        }
+        
+        .look-controls {
+            position: absolute;
+            bottom: 100px;
+            right: 30px;
+            width: 120px;
+            height: 120px;
+            pointer-events: auto;
+        }
+        
+        .control-dpad {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .control-btn {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background-color: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-weight: bold;
+            pointer-events: auto;
+            user-select: none;
+        }
+        
+        .control-btn:active {
+            background-color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .btn-up {
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        .btn-down {
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        
+        .btn-left {
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        
+        .btn-right {
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        
+        .btn-center {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        /* Mobile specific optimizations */
+        @media (max-width: 600px) {
+            .movement-controls, .look-controls {
+                bottom: 60px;
+                width: 100px;
+                height: 100px;
+            }
+            
+            .control-btn {
+                width: 35px;
+                height: 35px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="game-canvas"></canvas>
+        <div id="info-panel">
+            FPS: <span id="fps-counter">0</span> | 
+            Pos: <span id="position">0,0</span> | 
+            Angle: <span id="angle">0</span>
+        </div>
+        <div id="controls">
+            Touch the screen to look around | Use on-screen controls to move
+        </div>
+        
+        <!-- On-screen controls -->
+        <div class="control-container">
+            <div class="movement-controls">
+                <div class="control-dpad">
+                    <div class="control-btn btn-up" id="btn-forward">↑</div>
+                    <div class="control-btn btn-down" id="btn-backward">↓</div>
+                    <div class="control-btn btn-left" id="btn-left">←</div>
+                    <div class="control-btn btn-right" id="btn-right">→</div>
+                </div>
+            </div>
+            
+            <div class="look-controls">
+                <div class="control-dpad">
+                    <div class="control-btn btn-up" id="btn-look-up">↑</div>
+                    <div class="control-btn btn-down" id="btn-look-down">↓</div>
+                    <div class="control-btn btn-left" id="btn-look-left">←</div>
+                    <div class="control-btn btn-right" id="btn-look-right">→</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game canvas and context
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Set canvas size to full window
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        
+        // Game settings
+        const FOV = Math.PI / 3; // 60 degrees
+        const HALF_FOV = FOV / 2;
+        const NUM_RAYS = Math.min(320, Math.floor(canvas.width / 2)); // Adjust based on screen width
+        const MAX_DEPTH = 16;
+        const CELL_SIZE = 64;
+        const WALL_HEIGHT = 100;
+        const PLAYER_SPEED = 2; // Reduced from 5 for mobile
+        const ROTATION_SPEED = 0.03; // Reduced from 0.05 for mobile
+        
+        // Game map (1 = wall, 0 = empty space)
+        const MAP = [
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            [1, 0, 0, 0, 0, 0, 1, 0, 0, 1],
+            [1, 0, 1, 1, 0, 0, 1, 0, 0, 1],
+            [1, 0, 1, 0, 0, 0, 1, 0, 0, 1],
+            [1, 0, 1, 0, 0, 0, 0, 0, 0, 1],
+            [1, 0, 1, 0, 0, 0, 0, 0, 0, 1],
+            [1, 0, 1, 1, 1, 0, 1, 0, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+        ];
+        
+        const MAP_WIDTH = MAP[0].length;
+        const MAP_HEIGHT = MAP.length;
+        
+        // Player properties
+        const player = {
+            x: CELL_SIZE * 1.5,
+            y: CELL_SIZE * 1.5,
+            angle: Math.PI / 4,
+            speed: 0,
+            strafeSpeed: 0,
+            rotationSpeed: 0,
+            lookUpDown: 0
+        };
+        
+        // Textures (simple colored walls for this demo)
+        const wallTextures = [
+            {color: '#FF0000', darkColor: '#800000'},  // Red wall
+            {color: '#00FF00', darkColor: '#008000'},  // Green wall
+            {color: '#0000FF', darkColor: '#000080'},  // Blue wall
+            {color: '#FFFF00', darkColor: '#808000'}   // Yellow wall
+        ];
+        
+        // Floor and ceiling colors
+        const floorColor = '#333333';
+        const ceilingColor = '#888888';
+        
+        // Control state
+        const controls = {
+            forward: false,
+            backward: false,
+            left: false,
+            right: false,
+            lookLeft: false,
+            lookRight: false,
+            lookUp: false,
+            lookDown: false
+        };
+        
+        // Touch control
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let touchMoveX = 0;
+        let touchMoveY = 0;
+        let isTouching = false;
+        
+        // Performance tracking
+        let lastTime = 0;
+        let fps = 0;
+        
+        // Set up control buttons
+        function setupControls() {
+            // Movement buttons
+            document.getElementById('btn-forward').addEventListener('touchstart', () => controls.forward = true);
+            document.getElementById('btn-forward').addEventListener('touchend', () => controls.forward = false);
+            document.getElementById('btn-forward').addEventListener('mousedown', () => controls.forward = true);
+            document.getElementById('btn-forward').addEventListener('mouseup', () => controls.forward = false);
+            
+            document.getElementById('btn-backward').addEventListener('touchstart', () => controls.backward = true);
+            document.getElementById('btn-backward').addEventListener('touchend', () => controls.backward = false);
+            document.getElementById('btn-backward').addEventListener('mousedown', () => controls.backward = true);
+            document.getElementById('btn-backward').addEventListener('mouseup', () => controls.backward = false);
+            
+            document.getElementById('btn-left').addEventListener('touchstart', () => controls.left = true);
+            document.getElementById('btn-left').addEventListener('touchend', () => controls.left = false);
+            document.getElementById('btn-left').addEventListener('mousedown', () => controls.left = true);
+            document.getElementById('btn-left').addEventListener('mouseup', () => controls.left = false);
+            
+            document.getElementById('btn-right').addEventListener('touchstart', () => controls.right = true);
+            document.getElementById('btn-right').addEventListener('touchend', () => controls.right = false);
+            document.getElementById('btn-right').addEventListener('mousedown', () => controls.right = true);
+            document.getElementById('btn-right').addEventListener('mouseup', () => controls.right = false);
+            
+            // Look buttons
+            document.getElementById('btn-look-left').addEventListener('touchstart', () => controls.lookLeft = true);
+            document.getElementById('btn-look-left').addEventListener('touchend', () => controls.lookLeft = false);
+            document.getElementById('btn-look-left').addEventListener('mousedown', () => controls.lookLeft = true);
+            document.getElementById('btn-look-left').addEventListener('mouseup', () => controls.lookLeft = false);
+            
+            document.getElementById('btn-look-right').addEventListener('touchstart', () => controls.lookRight = true);
+            document.getElementById('btn-look-right').addEventListener('touchend', () => controls.lookRight = false);
+            document.getElementById('btn-look-right').addEventListener('mousedown', () => controls.lookRight = true);
+            document.getElementById('btn-look-right').addEventListener('mouseup', () => controls.lookRight = false);
+            
+            document.getElementById('btn-look-up').addEventListener('touchstart', () => controls.lookUp = true);
+            document.getElementById('btn-look-up').addEventListener('touchend', () => controls.lookUp = false);
+            document.getElementById('btn-look-up').addEventListener('mousedown', () => controls.lookUp = true);
+            document.getElementById('btn-look-up').addEventListener('mouseup', () => controls.lookUp = false);
+            
+            document.getElementById('btn-look-down').addEventListener('touchstart', () => controls.lookDown = true);
+            document.getElementById('btn-look-down').addEventListener('touchend', () => controls.lookDown = false);
+            document.getElementById('btn-look-down').addEventListener('mousedown', () => controls.lookDown = true);
+            document.getElementById('btn-look-down').addEventListener('mouseup', () => controls.lookDown = false);
+            
+            // Touch controls for looking around
+            canvas.addEventListener('touchstart', (e) => {
+                isTouching = true;
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+                e.preventDefault();
+            });
+            
+            canvas.addEventListener('touchmove', (e) => {
+                if (!isTouching) return;
+                touchMoveX = e.touches[0].clientX - touchStartX;
+                touchMoveY = e.touches[0].clientY - touchStartY;
+                touchStartX = e.touches[0].clientX;
+                touchStartY = e.touches[0].clientY;
+                e.preventDefault();
+            });
+            
+            canvas.addEventListener('touchend', () => {
+                isTouching = false;
+                touchMoveX = 0;
+                touchMoveY = 0;
+            });
+        }
+        
+        // Initialize the game
+        function initGame() {
+            setupControls();
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Game loop
+        function gameLoop(timestamp) {
+            // Calculate FPS
+            if (lastTime) {
+                fps = Math.round(1000 / (timestamp - lastTime));
+            }
+            lastTime = timestamp;
+            
+            // Update player movement
+            updatePlayer();
+            
+            // Clear canvas
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Render 3D view
+            render3DView();
+            
+            // Update info panel
+            document.getElementById('fps-counter').textContent = fps;
+            document.getElementById('position').textContent = 
+                `${Math.round(player.x)}, ${Math.round(player.y)}`;
+            document.getElementById('angle').textContent = 
+                `${Math.round(player.angle * 180 / Math.PI)}°`;
+            
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Update player position and rotation
+        function updatePlayer() {
+            // Handle look controls
+            if (controls.lookLeft) {
+                player.rotationSpeed = -ROTATION_SPEED;
+            } else if (controls.lookRight) {
+                player.rotationSpeed = ROTATION_SPEED;
+            } else if (isTouching) {
+                player.rotationSpeed = -touchMoveX * 0.01;
+                player.lookUpDown = Math.max(-50, Math.min(50, player.lookUpDown - touchMoveY * 0.1));
+            } else {
+                player.rotationSpeed = 0;
+            }
+            
+            // Handle look up/down buttons
+            if (controls.lookUp) {
+                player.lookUpDown = Math.max(-50, player.lookUpDown - 1);
+            } else if (controls.lookDown) {
+                player.lookUpDown = Math.min(50, player.lookUpDown + 1);
+            }
+            
+            // Update player angle
+            player.angle += player.rotationSpeed;
+            
+            // Normalize angle
+            if (player.angle < 0) player.angle += Math.PI * 2;
+            if (player.angle > Math.PI * 2) player.angle -= Math.PI * 2;
+            
+            // Handle movement
+            const moveAngle = controls.left || controls.right ? player.angle + Math.PI / 2 : player.angle;
+            player.speed = 0;
+            player.strafeSpeed = 0;
+            
+            if (controls.forward) {
+                player.speed = PLAYER_SPEED;
+            } else if (controls.backward) {
+                player.speed = -PLAYER_SPEED;
+            }
+            
+            if (controls.left) {
+                player.strafeSpeed = -PLAYER_SPEED;
+            } else if (controls.right) {
+                player.strafeSpeed = PLAYER_SPEED;
+            }
+            
+            // Calculate new position
+            const newX = player.x + Math.cos(player.angle) * player.speed + 
+                         Math.cos(moveAngle) * player.strafeSpeed;
+            const newY = player.y + Math.sin(player.angle) * player.speed + 
+                         Math.sin(moveAngle) * player.strafeSpeed;
+            
+            // Check for collisions
+            if (!isWall(newX, player.y)) {
+                player.x = newX;
+            }
+            if (!isWall(player.x, newY)) {
+                player.y = newY;
+            }
+        }
+        
+        // Check if a position is a wall
+        function isWall(x, y) {
+            const cellX = Math.floor(x / CELL_SIZE);
+            const cellY = Math.floor(y / CELL_SIZE);
+            
+            if (cellX < 0 || cellX >= MAP_WIDTH || cellY < 0 || cellY >= MAP_HEIGHT) {
+                return true;
+            }
+            
+            return MAP[cellY][cellX] !== 0;
+        }
+        
+        // Render the 3D view using raycasting
+        function render3DView() {
+            // Draw ceiling
+            ctx.fillStyle = ceilingColor;
+            ctx.fillRect(0, 0, canvas.width, canvas.height / 2);
+            
+            // Draw floor
+            ctx.fillStyle = floorColor;
+            ctx.fillRect(0, canvas.height / 2, canvas.width, canvas.height / 2);
+            
+            // Cast rays
+            for (let ray = 0; ray < NUM_RAYS; ray++) {
+                // Calculate ray angle
+                const rayAngle = player.angle - HALF_FOV + (FOV / NUM_RAYS) * ray;
+                
+                // Cast ray
+                const rayResult = castRay(rayAngle);
+                
+                // Calculate wall height
+                const distance = rayResult.distance * Math.cos(rayAngle - player.angle);
+                let wallHeight = (CELL_SIZE * canvas.height) / distance;
+                
+                // Apply look up/down effect
+                wallHeight = wallHeight * (1 + player.lookUpDown / 100);
+                let wallTop = (canvas.height - wallHeight) / 2 + player.lookUpDown;
+                let wallBottom = wallTop + wallHeight;
+                
+                // Ensure wall stays within bounds
+                wallTop = Math.max(0, wallTop);
+                wallBottom = Math.min(canvas.height, wallBottom);
+                
+                // Draw wall slice
+                const wallX = (canvas.width / NUM_RAYS) * ray;
+                const wallWidth = canvas.width / NUM_RAYS;
+                
+                // Get wall color based on texture and distance
+                const textureIndex = rayResult.texture || 0;
+                const wallColor = distance > CELL_SIZE * 3 ? 
+                    wallTextures[textureIndex].darkColor : 
+                    wallTextures[textureIndex].color;
+                
+                ctx.fillStyle = wallColor;
+                ctx.fillRect(wallX, wallTop, wallWidth + 1, wallBottom - wallTop);
+            }
+        }
+        
+        // Cast a ray and return distance to wall and wall texture
+        function castRay(angle) {
+            // Normalize angle
+            angle = normalizeAngle(angle);
+            
+            // Ray direction
+            const rayDirX = Math.cos(angle);
+            const rayDirY = Math.sin(angle);
+            
+            // Player's current cell
+            let mapX = Math.floor(player.x / CELL_SIZE);
+            let mapY = Math.floor(player.y / CELL_SIZE);
+            
+            // Length of ray from current position to next x or y-side
+            let sideDistX, sideDistY;
+            
+            // Length of ray from one x or y-side to next x or y-side
+            const deltaDistX = Math.abs(1 / rayDirX);
+            const deltaDistY = Math.abs(1 / rayDirY);
+            
+            // Direction to step in x or y direction (either +1 or -1)
+            let stepX, stepY;
+            
+            // Was a wall hit?
+            let hit = false;
+            // Was a NS or a EW wall hit?
+            let side;
+            // Texture of the wall that was hit
+            let texture = 0;
+            
+            // Calculate step and initial sideDist
+            if (rayDirX < 0) {
+                stepX = -1;
+                sideDistX = (player.x / CELL_SIZE - mapX) * deltaDistX;
+            } else {
+                stepX = 1;
+                sideDistX = (mapX + 1.0 - player.x / CELL_SIZE) * deltaDistX;
+            }
+            
+            if (rayDirY < 0) {
+                stepY = -1;
+                sideDistY = (player.y / CELL_SIZE - mapY) * deltaDistY;
+            } else {
+                stepY = 1;
+                sideDistY = (mapY + 1.0 - player.y / CELL_SIZE) * deltaDistY;
+            }
+            
+            // Perform DDA (Digital Differential Analysis)
+            while (!hit) {
+                // Jump to next map square, either in x-direction, or in y-direction
+                if (sideDistX < sideDistY) {
+                    sideDistX += deltaDistX;
+                    mapX += stepX;
+                    side = 0;
+                } else {
+                    sideDistY += deltaDistY;
+                    mapY += stepY;
+                    side = 1;
+                }
+                
+                // Check if ray has hit a wall
+                if (mapX < 0 || mapX >= MAP_WIDTH || mapY < 0 || mapY >= MAP_HEIGHT) {
+                    hit = true; // Hit the map boundary
+                    texture = 0;
+                } else if (MAP[mapY][mapX] > 0) {
+                    hit = true;
+                    texture = MAP[mapY][mapX] - 1; // Get texture index
+                }
+            }
+            
+            // Calculate distance projected on camera direction
+            let distance;
+            if (side === 0) {
+                distance = (mapX - player.x / CELL_SIZE + (1 - stepX) / 2) / rayDirX;
+            } else {
+                distance = (mapY - player.y / CELL_SIZE + (1 - stepY) / 2) / rayDirY;
+            }
+            
+            distance *= CELL_SIZE; // Convert to pixels
+            
+            return {
+                distance: distance,
+                texture: texture,
+                side: side
+            };
+        }
+        
+        // Normalize angle to be between 0 and 2*PI
+        function normalizeAngle(angle) {
+            angle = angle % (2 * Math.PI);
+            if (angle < 0) {
+                angle += 2 * Math.PI;
+            }
+            return angle;
+        }
+        
+        // Start the game
+        initGame();
+    </script>
+</body>
+</html>
