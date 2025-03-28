@@ -3,290 +3,1201 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Information Collector</title>
+    <title>Ultimate User Information Collector</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
+        :root {
+            --primary: #3498db;
+            --secondary: #2980b9;
+            --dark: #2c3e50;
+            --light: #ecf0f1;
+            --danger: #e74c3c;
+            --success: #2ecc71;
+            --warning: #f39c12;
+        }
+        
+        * {
+            box-sizing: border-box;
             margin: 0;
-            padding: 20px;
-            color: #333;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        h1 {
-            color: #2c3e50;
-            border-bottom: 2px solid #3498db;
-            padding-bottom: 10px;
-        }
-        h2 {
-            color: #2980b9;
-            margin-top: 30px;
-        }
-        .info-section {
-            background-color: #f9f9f9;
-            border-radius: 5px;
-            padding: 15px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        .info-item {
-            margin-bottom: 8px;
-            display: flex;
-        }
-        .info-label {
-            font-weight: bold;
-            min-width: 200px;
-        }
-        .warning {
-            color: #e74c3c;
-            font-weight: bold;
-        }
-        .cookie-list {
-            list-style-type: none;
             padding: 0;
         }
-        .cookie-item {
-            background-color: #ecf0f1;
-            padding: 8px;
-            margin-bottom: 5px;
-            border-radius: 3px;
-            word-break: break-all;
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f7fa;
+            padding: 10px;
+            max-width: 100%;
+            overflow-x: hidden;
         }
+        
+        h1 {
+            color: var(--dark);
+            text-align: center;
+            margin: 15px 0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--primary);
+        }
+        
+        h2 {
+            color: var(--secondary);
+            margin: 0;
+            padding: 12px 15px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: rgba(52, 152, 219, 0.1);
+            border-radius: 5px 5px 0 0;
+            transition: background-color 0.3s;
+        }
+        
+        h2:hover {
+            background-color: rgba(52, 152, 219, 0.2);
+        }
+        
+        h2::after {
+            content: '+';
+            font-size: 1.2em;
+            transition: transform 0.3s;
+        }
+        
+        h2.active::after {
+            content: '-';
+        }
+        
+        .section {
+            background-color: white;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .section-content {
+            padding: 15px;
+            display: none;
+        }
+        
+        .section.active .section-content {
+            display: block;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 10px;
+        }
+        
+        .info-item {
+            background-color: var(--light);
+            padding: 10px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            word-break: break-word;
+        }
+        
+        .info-item:hover {
+            background-color: #dfe6e9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .info-label {
+            font-weight: bold;
+            color: var(--dark);
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .info-label svg {
+            margin-right: 5px;
+            width: 16px;
+            height: 16px;
+        }
+        
+        .info-value {
+            color: #555;
+            transition: color 0.3s;
+        }
+        
+        .info-value.updated {
+            color: var(--primary);
+            font-weight: bold;
+        }
+        
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px 0;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: var(--secondary);
+        }
+        
+        .warning {
+            color: var(--warning);
+            font-size: 0.9em;
+            margin-left: 5px;
+        }
+        
+        .danger {
+            color: var(--danger);
+        }
+        
+        .success {
+            color: var(--success);
+        }
+        
+        .battery-container {
+            display: flex;
+            align-items: center;
+            margin-top: 5px;
+        }
+        
         #battery-level {
             height: 20px;
             background-color: #eee;
-            width: 100px;
-            display: inline-block;
-            vertical-align: middle;
+            width: 60px;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-right: 10px;
         }
+        
         #battery-level-fill {
             height: 100%;
-            background-color: #2ecc71;
+            background-color: var(--success);
             width: 0%;
+            transition: width 0.5s, background-color 0.5s;
+        }
+        
+        .cookie-list {
+            list-style-type: none;
+        }
+        
+        .cookie-item {
+            background-color: #f8f9fa;
+            padding: 8px;
+            margin-bottom: 5px;
+            border-radius: 3px;
+            border-left: 3px solid var(--primary);
+        }
+        
+        .canvas-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        canvas {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .fingerprint {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            font-family: monospace;
+            word-break: break-all;
+        }
+        
+        @media (max-width: 600px) {
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 1.5em;
+            }
+            
+            h2 {
+                font-size: 1.1em;
+                padding: 10px;
+            }
         }
     </style>
 </head>
 <body>
-    <h1>User Information Collector</h1>
+    <h1>Ultimate User Information Collector</h1>
     
-    <div class="info-section">
-        <h2>Browser Information</h2>
-        <div class="info-item">
-            <span class="info-label">User Agent:</span>
-            <span id="user-agent"></span>
-        </div>
-        <div class="info-item">
-            <span class="info-label">Browser Name:</span>
-            <span id="browser-name"></span>
-        </div>
-        <div class="info-item">
-            <span class="info-label">Browser Version:</span>
-            <span id="browser-version"></span>
-        </div>
-        <div class="info-item">
-            <span class="info-label">Platform:</span>
-            <span id="platform"></span>
-        </div>
-        <div class="info-item">
-            <span class="info-label">Language:</span>
-            <span id="language"></span>
-        </div>
-        <div class="info-item">
-            <span class="info-label">Cookies Enabled:</span>
-            <span id="cookies-enabled"></span>
-        </div>
-        <div class="info-item">
-            <span class="info-label">Do Not Track:</span>
-            <span id="do-not-track"></span>
-        </div>
-        <div class="info-item">
-            <span class="info-label">Online Status:</span>
-            <span id="online-status"></span>
-        </div>
-        <div class="info-item">
-            <span class="info-label">Browser Window Size:</span>
-            <span id="window-size"></span>
-        </div>
-        <div class="info-item">
-            <span class="info-label">Screen Size:</span>
-            <span id="screen-size"></span>
-        </div>
-        <div class="info-item">
-            <span class="info-label">Viewport Size:</span>
-            <span id="viewport-size"></span>
-        </div>
-        <div class="info-item">
-            <span class="info-label">Color Depth:</span>
-            <span id="color-depth"></span>
-        </div>
-        <div class="info-item">
-            <span class="info-label">Pixel Ratio:</span>
-            <span id="pixel-ratio"></span>
-        </div>
-    </div>
-
-    <div class="info-section">
-        <h2>Device Information</h2>
-        <div class="info-item">
-            <span class="info-label">Device Memory:</span>
-            <span id="device-memory"></span>
-        </div>
-        <div class="info-item">
-            <span class="info-label">Hardware Concurrency:</span>
-            <span id="hardware-concurrency"></span>
-        </div>
-        <div class="info-item">
-            <span class="info-label">Touch Support:</span>
-            <span id="touch-support"></span>
-        </div>
-        <div class="info-item">
-            <span class="info-label">Battery Status:</span>
-            <span id="battery-status"></span>
-            <div id="battery-level"><div id="battery-level-fill"></div></div>
-        </div>
-        <div class="info-item">
-            <span class="info-label">Device Orientation:</span>
-            <span id="device-orientation"></span>
-        </div>
-        <div class="info-item">
-            <span class="info-label">Device Motion:</span>
-            <span id="device-motion"></span>
-        </div>
-    </div>
-
-    <div class="info-section">
-        <h2>Connection Information</h2>
-        <div class="info-item">
-            <span class="info-label">Connection Type:</span>
-            <span id="connection-type"></span>
-        </div>
-        <div class="info-item">
-            <span class="info-label">Effective Connection Type:</span>
-            <span id="effective-connection"></span>
-        </div>
-        <div class="info-item">
-            <span class="info-label">Downlink Speed:</span>
-            <span id="downlink"></span>
-        </div>
-        <div class="info-item">
-            <span class="info-label">Round Trip Time:</span>
-            <span id="rtt"></span>
-        </div>
-        <div class="info-item">
-            <span class="info-label">Save Data Mode:</span>
-            <span id="save-data"></span>
+    <div class="section active">
+        <h2 class="section-toggle">🌐 Browser Identification</h2>
+        <div class="section-content">
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+                        </svg>
+                        User Agent
+                    </div>
+                    <div class="info-value" id="user-agent"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-5 14H4v-4h11v4zm0-5H4V9h11v4zm5 5h-4V9h4v9z"/>
+                        </svg>
+                        Browser Fingerprint
+                    </div>
+                    <div class="info-value" id="browser-fingerprint"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/>
+                        </svg>
+                        Browser Name
+                    </div>
+                    <div class="info-value" id="browser-name"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/>
+                        </svg>
+                        Browser Version
+                    </div>
+                    <div class="info-value" id="browser-version"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+                        </svg>
+                        Platform
+                    </div>
+                    <div class="info-value" id="platform"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"/>
+                        </svg>
+                        Language
+                    </div>
+                    <div class="info-value" id="language"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/>
+                        </svg>
+                        Cookies Enabled
+                    </div>
+                    <div class="info-value" id="cookies-enabled"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/>
+                        </svg>
+                        Do Not Track
+                    </div>
+                    <div class="info-value" id="do-not-track"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M1 9l2 2c4.97-4.97 13.03-4.97 18 0l2-2C16.93 2.93 7.08 2.93 1 9zm8 8l3 3 3-3c-1.65-1.66-4.34-1.66-6 0zm-4-4l2 2c2.76-2.76 7.24-2.76 10 0l2-2C15.14 9.14 8.87 9.14 5 13z"/>
+                        </svg>
+                        Online Status
+                    </div>
+                    <div class="info-value" id="online-status"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/>
+                        </svg>
+                        Referrer
+                    </div>
+                    <div class="info-value" id="referrer"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M13 2.05v3.03c3.39.49 6 3.39 6 6.92 0 .9-.18 1.75-.5 2.54l2.62 1.53c.56-1.24.88-2.62.88-4.07 0-5.18-3.95-9.45-9-9.95zM12 19c-3.87 0-7-3.13-7-7 0-3.53 2.61-6.43 6-6.92V2.05c-5.06.5-9 4.76-9 9.95 0 5.52 4.47 10 9.99 10 3.31 0 6.24-1.61 8.06-4.09l-2.6-1.53C16.17 17.98 14.21 19 12 19z"/>
+                        </svg>
+                        Page Load Time
+                    </div>
+                    <div class="info-value" id="page-load-time"></div>
+                </div>
+            </div>
         </div>
     </div>
-
-    <div class="info-section">
-        <h2>Location Information</h2>
-        <div class="info-item">
-            <span class="info-label">Geolocation:</span>
-            <span id="geolocation"></span>
-            <button id="request-geolocation">Request Geolocation</button>
-            <span class="warning">(Requires user permission)</span>
-        </div>
-        <div class="info-item">
-            <span class="info-label">IP Address:</span>
-            <span id="ip-address">Loading...</span>
-        </div>
-        <div class="info-item">
-            <span class="info-label">Timezone:</span>
-            <span id="timezone"></span>
-        </div>
-        <div class="info-item">
-            <span class="info-label">Local Time:</span>
-            <span id="local-time"></span>
+    
+    <div class="section">
+        <h2 class="section-toggle">📱 Device Information</h2>
+        <div class="section-content">
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M17 1.01L7 1c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-1.99-2-1.99zM17 19H7V5h10v14z"/>
+                        </svg>
+                        Device Type
+                    </div>
+                    <div class="info-value" id="device-type"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M7 1.01L17 1c1.1 0 2 .9 2 2v18c0 1.1-.9 2-2 2H7c-1.1 0-2-.9-2-2V3c0-1.1.9-1.99 2-1.99zM7 19h10V5H7v14z"/>
+                        </svg>
+                        Device Memory
+                    </div>
+                    <div class="info-value" id="device-memory"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M15.5 1h-8C6.12 1 5 2.12 5 3.5v17C5 21.88 6.12 23 7.5 23h8c1.38 0 2.5-1.12 2.5-2.5v-17C18 2.12 16.88 1 15.5 1zm-4 21c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4.5-4H7V4h9v14z"/>
+                        </svg>
+                        CPU Cores
+                    </div>
+                    <div class="info-value" id="hardware-concurrency"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M7 1.01L17 1c1.1 0 2 .9 2 2v18c0 1.1-.9 2-2 2H7c-1.1 0-2-.9-2-2V3c0-1.1.9-1.99 2-1.99zM7 19h10V5H7v14z"/>
+                        </svg>
+                        Touch Support
+                    </div>
+                    <div class="info-value" id="touch-support"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.33V5.33C17 4.6 16.4 4 15.67 4z"/>
+                        </svg>
+                        Battery Status
+                    </div>
+                    <div class="info-value" id="battery-status"></div>
+                    <div class="battery-container">
+                        <div id="battery-level"><div id="battery-level-fill"></div></div>
+                        <span id="battery-percentage"></span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/>
+                        </svg>
+                        Device Orientation
+                    </div>
+                    <div class="info-value" id="device-orientation"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/>
+                        </svg>
+                        Device Motion
+                    </div>
+                    <div class="info-value" id="device-motion"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/>
+                        </svg>
+                        Vibration API
+                    </div>
+                    <div class="info-value" id="vibration-api"></div>
+                    <button id="test-vibration">Test Vibration</button>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/>
+                        </svg>
+                        Device Pixel Ratio
+                    </div>
+                    <div class="info-value" id="pixel-ratio"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/>
+                        </svg>
+                        Screen Orientation
+                    </div>
+                    <div class="info-value" id="screen-orientation"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M21 3H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H3V5h18v14zM8 15c0-1.66 1.34-3 3-3 .35 0 .69.07 1 .18V6h5v2h-3v7.03c-.02 1.64-1.35 2.97-3 2.97-1.66 0-3-1.34-3-3z"/>
+                        </svg>
+                        Device ID (Experimental)
+                    </div>
+                    <div class="info-value" id="device-id"></div>
+                </div>
+            </div>
         </div>
     </div>
-
-    <div class="info-section">
-        <h2>Storage Information</h2>
-        <div class="info-item">
-            <span class="info-label">Local Storage:</span>
-            <span id="local-storage"></span>
-        </div>
-        <div class="info-item">
-            <span class="info-label">Session Storage:</span>
-            <span id="session-storage"></span>
-        </div>
-        <div class="info-item">
-            <span class="info-label">IndexedDB Support:</span>
-            <span id="indexeddb"></span>
-        </div>
-        <div class="info-item">
-            <span class="info-label">WebSQL Support:</span>
-            <span id="websql"></span>
-        </div>
-        <div class="info-item">
-            <span class="info-label">Cache API Support:</span>
-            <span id="cache-api"></span>
+    
+    <div class="section">
+        <h2 class="section-toggle">🖥️ Display Information</h2>
+        <div class="section-content">
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M21 3H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H3V5h18v14z"/>
+                        </svg>
+                        Screen Size
+                    </div>
+                    <div class="info-value" id="screen-size"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M21 3H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H3V5h18v14z"/>
+                        </svg>
+                        Window Size
+                    </div>
+                    <div class="info-value" id="window-size"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M21 3H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H3V5h18v14z"/>
+                        </svg>
+                        Viewport Size
+                    </div>
+                    <div class="info-value" id="viewport-size"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9-4.03-9-9-9zm0 16c-3.86 0-7-3.14-7-7s3.14-7 7-7 7 3.14 7 7-3.14 7-7 7z"/>
+                        </svg>
+                        Color Depth
+                    </div>
+                    <div class="info-value" id="color-depth"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9-4.03-9-9-9zm0 16c-3.86 0-7-3.14-7-7s3.14-7 7-7 7 3.14 7 7-3.14 7-7 7z"/>
+                        </svg>
+                        Pixel Ratio
+                    </div>
+                    <div class="info-value" id="pixel-ratio-2"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9-4.03-9-9-9zm0 16c-3.86 0-7-3.14-7-7s3.14-7 7-7 7 3.14 7 7-3.14 7-7 7z"/>
+                        </svg>
+                        Display Mode
+                    </div>
+                    <div class="info-value" id="display-mode"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9-4.03-9-9-9zm0 16c-3.86 0-7-3.14-7-7s3.14-7 7-7 7 3.14 7 7-3.14 7-7 7z"/>
+                        </svg>
+                        Preferred Color Scheme
+                    </div>
+                    <div class="info-value" id="color-scheme"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9-4.03-9-9-9zm0 16c-3.86 0-7-3.14-7-7s3.14-7 7-7 7 3.14 7 7-3.14 7-7 7z"/>
+                        </svg>
+                        Contrast Preference
+                    </div>
+                    <div class="info-value" id="contrast-preference"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9-4.03-9-9-9zm0 16c-3.86 0-7-3.14-7-7s3.14-7 7-7 7 3.14 7 7-3.14 7-7 7z"/>
+                        </svg>
+                        Reduced Motion
+                    </div>
+                    <div class="info-value" id="reduced-motion"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9-4.03-9-9-9zm0 16c-3.86 0-7-3.14-7-7s3.14-7 7-7 7 3.14 7 7-3.14 7-7 7z"/>
+                        </svg>
+                        Screen Wake Lock
+                    </div>
+                    <div class="info-value" id="wake-lock"></div>
+                    <button id="test-wake-lock">Test Wake Lock</button>
+                </div>
+            </div>
         </div>
     </div>
-
-    <div class="info-section">
-        <h2>Cookies</h2>
-        <div class="info-item">
-            <span class="info-label">All Cookies:</span>
-            <ul class="cookie-list" id="cookies-list"></ul>
+    
+    <div class="section">
+        <h2 class="section-toggle">📶 Network Information</h2>
+        <div class="section-content">
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/>
+                        </svg>
+                        Connection Type
+                    </div>
+                    <div class="info-value" id="connection-type"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/>
+                        </svg>
+                        Effective Connection
+                    </div>
+                    <div class="info-value" id="effective-connection"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/>
+                        </svg>
+                        Downlink Speed
+                    </div>
+                    <div class="info-value" id="downlink"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/>
+                        </svg>
+                        Round Trip Time
+                    </div>
+                    <div class="info-value" id="rtt"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/>
+                        </svg>
+                        Save Data Mode
+                    </div>
+                    <div class="info-value" id="save-data"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/>
+                        </svg>
+                        IP Address
+                    </div>
+                    <div class="info-value" id="ip-address">Loading...</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/>
+                        </svg>
+                        Network State
+                    </div>
+                    <div class="info-value" id="network-state"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/>
+                        </svg>
+                        Network Type
+                    </div>
+                    <div class="info-value" id="network-type"></div>
+                </div>
+            </div>
         </div>
     </div>
-
-    <div class="info-section">
-        <h2>WebGL Information</h2>
-        <div class="info-item">
-            <span class="info-label">WebGL Vendor:</span>
-            <span id="webgl-vendor"></span>
-        </div>
-        <div class="info-item">
-            <span class="info-label">WebGL Renderer:</span>
-            <span id="webgl-renderer"></span>
+    
+    <div class="section">
+        <h2 class="section-toggle">📍 Location Information</h2>
+        <div class="section-content">
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                        </svg>
+                        Geolocation
+                    </div>
+                    <div class="info-value" id="geolocation">Not requested</div>
+                    <button id="request-geolocation">Request Geolocation</button>
+                    <span class="warning">(Requires permission)</span>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                        </svg>
+                        IP Geolocation
+                    </div>
+                    <div class="info-value" id="ip-geolocation">Loading...</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/>
+                            <path d="M12.5 7H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
+                        </svg>
+                        Timezone
+                    </div>
+                    <div class="info-value" id="timezone"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/>
+                            <path d="M12.5 7H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
+                        </svg>
+                        Local Time
+                    </div>
+                    <div class="info-value" id="local-time"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/>
+                            <path d="M12.5 7H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
+                        </svg>
+                        Timezone Offset
+                    </div>
+                    <div class="info-value" id="timezone-offset"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM9 10H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm-8 4H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z"/>
+                        </svg>
+                        Date Format
+                    </div>
+                    <div class="info-value" id="date-format"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM9 10H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm-8 4H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z"/>
+                        </svg>
+                        Time Format
+                    </div>
+                    <div class="info-value" id="time-format"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM9 10H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm-8 4H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z"/>
+                        </svg>
+                        First Day of Week
+                    </div>
+                    <div class="info-value" id="first-day-week"></div>
+                </div>
+            </div>
         </div>
     </div>
-
-    <div class="info-section">
-        <h2>Media Capabilities</h2>
-        <div class="info-item">
-            <span class="info-label">Audio Context:</span>
-            <span id="audio-context"></span>
-        </div>
-        <div class="info-item">
-            <span class="info-label">Microphone Access:</span>
-            <span id="microphone"></span>
-            <button id="request-microphone">Test Microphone</button>
-            <span class="warning">(Requires user permission)</span>
-        </div>
-        <div class="info-item">
-            <span class="info-label">Camera Access:</span>
-            <span id="camera"></span>
-            <button id="request-camera">Test Camera</button>
-            <span class="warning">(Requires user permission)</span>
+    
+    <div class="section">
+        <h2 class="section-toggle">💾 Storage Information</h2>
+        <div class="section-content">
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/>
+                        </svg>
+                        Local Storage
+                    </div>
+                    <div class="info-value" id="local-storage"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/>
+                        </svg>
+                        Session Storage
+                    </div>
+                    <div class="info-value" id="session-storage"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/>
+                        </svg>
+                        IndexedDB Support
+                    </div>
+                    <div class="info-value" id="indexeddb"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/>
+                        </svg>
+                        WebSQL Support
+                    </div>
+                    <div class="info-value" id="websql"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/>
+                        </svg>
+                        Cache API Support
+                    </div>
+                    <div class="info-value" id="cache-api"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/>
+                        </svg>
+                        Service Worker Support
+                    </div>
+                    <div class="info-value" id="service-worker"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/>
+                        </svg>
+                        Cookie Store API
+                    </div>
+                    <div class="info-value" id="cookie-store"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/>
+                        </svg>
+                        Storage Quota
+                    </div>
+                    <div class="info-value" id="storage-quota">Checking...</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/>
+                        </svg>
+                        Storage Usage
+                    </div>
+                    <div class="info-value" id="storage-usage">Checking...</div>
+                </div>
+            </div>
         </div>
     </div>
-
-    <div class="info-section">
-        <h2>Other Information</h2>
-        <div class="info-item">
-            <span class="info-label">Referrer:</span>
-            <span id="referrer"></span>
+    
+    <div class="section">
+        <h2 class="section-toggle">🍪 Cookies & Tracking</h2>
+        <div class="section-content">
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/>
+                        </svg>
+                        All Cookies
+                    </div>
+                    <ul class="cookie-list" id="cookies-list"></ul>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/>
+                        </svg>
+                        Tracking Protection
+                    </div>
+                    <div class="info-value" id="tracking-protection"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/>
+                        </svg>
+                        Third-Party Cookies
+                    </div>
+                    <div class="info-value" id="third-party-cookies"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/>
+                        </svg>
+                        Cookie Behavior
+                    </div>
+                    <div class="info-value" id="cookie-behavior"></div>
+                </div>
+            </div>
         </div>
-        <div class="info-item">
-            <span class="info-label">Page Load Time:</span>
-            <span id="page-load-time"></span>
+    </div>
+    
+    <div class="section">
+        <h2 class="section-toggle">🎮 Hardware & Graphics</h2>
+        <div class="section-content">
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/>
+                        </svg>
+                        WebGL Vendor
+                    </div>
+                    <div class="info-value" id="webgl-vendor"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/>
+                        </svg>
+                        WebGL Renderer
+                    </div>
+                    <div class="info-value" id="webgl-renderer"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/>
+                        </svg>
+                        WebGL Version
+                    </div>
+                    <div class="info-value" id="webgl-version"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/>
+                        </svg>
+                        GPU Info
+                    </div>
+                    <div class="info-value" id="gpu-info"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/>
+                        </svg>
+                        Max Texture Size
+                    </div>
+                    <div class="info-value" id="max-texture-size"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/>
+                        </svg>
+                        Audio Context
+                    </div>
+                    <div class="info-value" id="audio-context"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/>
+                        </svg>
+                        Audio Sample Rate
+                    </div>
+                    <div class="info-value" id="audio-sample-rate"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/>
+                        </svg>
+                        WebRTC Support
+                    </div>
+                    <div class="info-value" id="webrtc-support"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/>
+                        </svg>
+                        WebRTC IP Leak
+                    </div>
+                    <div class="info-value" id="webrtc-ip"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/>
+                        </svg>
+                        Gamepad API
+                    </div>
+                    <div class="info-value" id="gamepad-api"></div>
+                    <button id="test-gamepad">Test Gamepad</button>
+                </div>
+            </div>
+            
+            <h3 style="margin-top: 20px;">Canvas Fingerprinting</h3>
+            <div class="canvas-container">
+                <canvas id="canvas-1" width="200" height="30"></canvas>
+                <canvas id="canvas-2" width="200" height="30"></canvas>
+                <canvas id="canvas-3" width="200" height="30"></canvas>
+            </div>
+            <div class="fingerprint" id="canvas-fingerprint"></div>
         </div>
-        <div class="info-item">
-            <span class="info-label">Browser Permissions:</span>
-            <span id="permissions"></span>
+    </div>
+    
+    <div class="section">
+        <h2 class="section-toggle">🎤 Media Capabilities</h2>
+        <div class="section-content">
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/>
+                        </svg>
+                        Microphone Access
+                    </div>
+                    <div class="info-value" id="microphone">Not requested</div>
+                    <button id="request-microphone">Test Microphone</button>
+                    <span class="warning">(Requires permission)</span>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/>
+                        </svg>
+                        Camera Access
+                    </div>
+                    <div class="info-value" id="camera">Not requested</div>
+                    <button id="request-camera">Test Camera</button>
+                    <span class="warning">(Requires permission)</span>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/>
+                        </svg>
+                        Media Devices
+                    </div>
+                    <div class="info-value" id="media-devices">Loading...</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/>
+                        </svg>
+                        Media Capabilities
+                    </div>
+                    <div class="info-value" id="media-capabilities"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/>
+                        </svg>
+                        Media Session API
+                    </div>
+                    <div class="info-value" id="media-session"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/>
+                        </svg>
+                        Speech Synthesis
+                    </div>
+                    <div class="info-value" id="speech-synthesis"></div>
+                    <button id="test-speech">Test Speech</button>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"/>
+                        </svg>
+                        Speech Recognition
+                    </div>
+                    <div class="info-value" id="speech-recognition"></div>
+                    <button id="test-recognition">Test Recognition</button>
+                </div>
+            </div>
         </div>
-        <div class="info-item">
-            <span class="info-label">Notification Permission:</span>
-            <span id="notification-permission"></span>
-            <button id="request-notification">Request Notification</button>
+    </div>
+    
+    <div class="section">
+        <h2 class="section-toggle">🔐 Permissions & Security</h2>
+        <div class="section-content">
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+                        </svg>
+                        Notification Permission
+                    </div>
+                    <div class="info-value" id="notification-permission"></div>
+                    <button id="request-notification">Request Notification</button>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+                        </svg>
+                        Clipboard Permission
+                    </div>
+                    <div class="info-value" id="clipboard-permission"></div>
+                    <button id="request-clipboard">Request Clipboard</button>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+                        </svg>
+                        MIDI Permission
+                    </div>
+                    <div class="info-value" id="midi-permission"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+                        </svg>
+                        Credential Management
+                    </div>
+                    <div class="info-value" id="credential-management"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+                        </svg>
+                        Payment Request API
+                    </div>
+                    <div class="info-value" id="payment-request"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+                        </svg>
+                        Content Security Policy
+                    </div>
+                    <div class="info-value" id="content-security"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+                        </svg>
+                        Secure Context
+                    </div>
+                    <div class="info-value" id="secure-context"></div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+                        </svg>
+                        Mixed Content
+                    </div>
+                    <div class="info-value" id="mixed-content"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h2 class="section-toggle">🔍 Advanced Fingerprinting</h2>
+        <div class="section-content">
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9-4.03-9-9-9zm0 16c-3.86 0-7-3.14-7-7s3.14-7 7-7 7 3.14 7 7-3.14 7-7 7z"/>
+                        </svg>
+                        Font List
+                    </div>
+                    <div class="info-value" id="font-list">Loading...</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9-4.03-9-9-9zm0 16c-3.86 0-7-3.14-7-7s3.14-7 7-7 7 3.14 7 7-3.14 7-7 7z"/>
+                        </svg>
+                        Installed Plugins
+                    </div>
+                    <div class="info-value" id="plugins-list">Loading...</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9-4.03-9-9-9zm0 16c-3.86 0-7-3.14-7-7s3.14-7 7-7 7 3.14 7 7-3.14 7-7 7z"/>
+                        </svg>
+                        MIME Types
+                    </div>
+                    <div class="info-value" id="mime-types">Loading...</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9-4.03-9-9-9zm0 16c-3.86 0-7-3.14-7-7s3.14-7 7-7 7 3.14 7 7-3.14 7-7 7z"/>
+                        </svg>
+                        Audio Fingerprint
+                    </div>
+                    <div class="info-value" id="audio-fingerprint">Calculating...</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9-4.03-9-9-9zm0 16c-3.86 0-7-3.14-7-7s3.14-7 7-7 7 3.14 7 7-3.14 7-7 7z"/>
+                        </svg>
+                        WebGL Fingerprint
+                    </div>
+                    <div class="info-value" id="webgl-fingerprint">Calculating...</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9-4.03-9-9-9zm0 16c-3.86 0-7-3.14-7-7s3.14-7 7-7 7 3.14 7 7-3.14 7-7 7z"/>
+                        </svg>
+                        Canvas Fingerprint
+                    </div>
+                    <div class="info-value" id="canvas-fingerprint-text">Calculating...</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9-4.03-9-9-9zm0 16c-3.86 0-7-3.14-7-7s3.14-7 7-7 7 3.14 7 7-3.14 7-7 7z"/>
+                        </svg>
+                        Device Fingerprint
+                    </div>
+                    <div class="info-value" id="device-fingerprint">Calculating...</div>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
+        // Toggle sections
+        document.querySelectorAll('.section-toggle').forEach(toggle => {
+            toggle.addEventListener('click', () => {
+                const section = toggle.parentElement;
+                section.classList.toggle('active');
+            });
+        });
+
         // Basic browser info
         document.getElementById('user-agent').textContent = navigator.userAgent;
         document.getElementById('platform').textContent = navigator.platform;
@@ -294,6 +1205,7 @@
         document.getElementById('cookies-enabled').textContent = navigator.cookieEnabled ? 'Yes' : 'No';
         document.getElementById('do-not-track').textContent = navigator.doNotTrack || 'Not specified';
         document.getElementById('online-status').textContent = navigator.onLine ? 'Online' : 'Offline';
+        document.getElementById('referrer').textContent = document.referrer || 'No referrer';
         
         // Parse browser name and version from user agent
         const ua = navigator.userAgent;
@@ -301,19 +1213,19 @@
         
         if (ua.includes('Firefox')) {
             browserName = 'Firefox';
-            browserVersion = ua.match(/Firefox\/(\d+\.\d+)/)[1];
+            browserVersion = ua.match(/Firefox\/(\d+\.\d+)/)?.[1] || 'Unknown';
         } else if (ua.includes('Chrome')) {
             browserName = 'Chrome';
-            browserVersion = ua.match(/Chrome\/(\d+\.\d+)/)[1];
+            browserVersion = ua.match(/Chrome\/(\d+\.\d+)/)?.[1] || 'Unknown';
         } else if (ua.includes('Safari')) {
             browserName = 'Safari';
-            browserVersion = ua.match(/Version\/(\d+\.\d+)/)[1];
+            browserVersion = ua.match(/Version\/(\d+\.\d+)/)?.[1] || 'Unknown';
         } else if (ua.includes('Edge')) {
             browserName = 'Edge';
-            browserVersion = ua.match(/Edge\/(\d+\.\d+)/)[1];
+            browserVersion = ua.match(/Edge\/(\d+\.\d+)/)?.[1] || 'Unknown';
         } else if (ua.includes('Opera') || ua.includes('OPR')) {
             browserName = 'Opera';
-            browserVersion = ua.match(/(?:Opera|OPR)\/(\d+\.\d+)/)[1];
+            browserVersion = ua.match(/(?:Opera|OPR)\/(\d+\.\d+)/)?.[1] || 'Unknown';
         } else if (ua.includes('MSIE') || ua.includes('Trident')) {
             browserName = 'Internet Explorer';
             const match = ua.match(/(?:MSIE |rv:)(\d+\.\d+)/);
@@ -326,41 +1238,80 @@
         document.getElementById('browser-name').textContent = browserName;
         document.getElementById('browser-version').textContent = browserVersion;
         
+        // Device type detection
+        const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        const isTablet = /iPad|Android|Tablet/i.test(navigator.userAgent) && !/Mobile/i.test(navigator.userAgent);
+        let deviceType = 'Desktop';
+        if (isMobile) deviceType = 'Mobile';
+        if (isTablet) deviceType = 'Tablet';
+        document.getElementById('device-type').textContent = deviceType;
+        
         // Screen info
-        document.getElementById('window-size').textContent = `${window.innerWidth} × ${window.innerHeight}`;
-        document.getElementById('screen-size').textContent = `${screen.width} × ${screen.height}`;
-        document.getElementById('viewport-size').textContent = `${document.documentElement.clientWidth} × ${document.documentElement.clientHeight}`;
-        document.getElementById('color-depth').textContent = `${screen.colorDepth} bits`;
-        document.getElementById('pixel-ratio').textContent = window.devicePixelRatio || 'Not available';
+        function updateScreenInfo() {
+            document.getElementById('window-size').textContent = `${window.innerWidth} × ${window.innerHeight}`;
+            document.getElementById('screen-size').textContent = `${screen.width} × ${screen.height}`;
+            document.getElementById('viewport-size').textContent = `${document.documentElement.clientWidth} × ${document.documentElement.clientHeight}`;
+            document.getElementById('color-depth').textContent = `${screen.colorDepth} bits`;
+            document.getElementById('pixel-ratio').textContent = window.devicePixelRatio || 'Not available';
+            document.getElementById('pixel-ratio-2').textContent = window.devicePixelRatio || 'Not available';
+        }
+        updateScreenInfo();
+        window.addEventListener('resize', updateScreenInfo);
         
         // Device info
         document.getElementById('hardware-concurrency').textContent = navigator.hardwareConcurrency || 'Not available';
         document.getElementById('device-memory').textContent = navigator.deviceMemory ? `${navigator.deviceMemory} GB` : 'Not available';
         document.getElementById('touch-support').textContent = 'ontouchstart' in window ? 'Supported' : 'Not supported';
+        document.getElementById('vibration-api').textContent = 'vibrate' in navigator ? 'Supported' : 'Not supported';
         
-        // Battery API (may not be supported in all browsers)
+        // Battery API
         if ('getBattery' in navigator) {
             navigator.getBattery().then(battery => {
-                document.getElementById('battery-status').textContent = `${battery.charging ? 'Charging' : 'Discharging'}`;
-                document.getElementById('battery-level-fill').style.width = `${battery.level * 100}%`;
+                updateBatteryInfo(battery);
                 
                 battery.addEventListener('chargingchange', () => {
-                    document.getElementById('battery-status').textContent = `${battery.charging ? 'Charging' : 'Discharging'}`;
+                    updateBatteryInfo(battery);
                 });
                 
                 battery.addEventListener('levelchange', () => {
-                    document.getElementById('battery-level-fill').style.width = `${battery.level * 100}%`;
+                    updateBatteryInfo(battery);
                 });
             });
         } else {
             document.getElementById('battery-status').textContent = 'Not supported';
         }
         
+        function updateBatteryInfo(battery) {
+            document.getElementById('battery-status').textContent = `${battery.charging ? 'Charging' : 'Discharging'}, ${(battery.level * 100).toFixed(0)}%`;
+            document.getElementById('battery-level-fill').style.width = `${battery.level * 100}%`;
+            document.getElementById('battery-percentage').textContent = `${(battery.level * 100).toFixed(0)}%`;
+            
+            // Change color based on level
+            if (battery.level < 0.2) {
+                document.getElementById('battery-level-fill').style.backgroundColor = 'var(--danger)';
+            } else if (battery.level < 0.5) {
+                document.getElementById('battery-level-fill').style.backgroundColor = 'var(--warning)';
+            } else {
+                document.getElementById('battery-level-fill').style.backgroundColor = 'var(--success)';
+            }
+        }
+        
+        // Test vibration
+        document.getElementById('test-vibration').addEventListener('click', () => {
+            if ('vibrate' in navigator) {
+                navigator.vibrate([200, 100, 200]);
+                document.getElementById('vibration-api').textContent = 'Vibrated!';
+                setTimeout(() => {
+                    document.getElementById('vibration-api').textContent = 'Supported';
+                }, 1000);
+            }
+        });
+        
         // Device orientation/motion
         if ('DeviceOrientationEvent' in window) {
             window.addEventListener('deviceorientation', (event) => {
-                document.getElementById('device-orientation').textContent = 
-                    `Alpha: ${event.alpha.toFixed(2)}, Beta: ${event.beta.toFixed(2)}, Gamma: ${event.gamma.toFixed(2)}`;
+                const value = `Alpha: ${event.alpha?.toFixed(2) || 'N/A'}, Beta: ${event.beta?.toFixed(2) || 'N/A'}, Gamma: ${event.gamma?.toFixed(2) || 'N/A'}`;
+                updateInfoWithEffect('device-orientation', value);
             });
         } else {
             document.getElementById('device-orientation').textContent = 'Not supported';
@@ -369,12 +1320,42 @@
         if ('DeviceMotionEvent' in window) {
             window.addEventListener('devicemotion', (event) => {
                 const acc = event.acceleration;
-                document.getElementById('device-motion').textContent = 
-                    `X: ${acc.x ? acc.x.toFixed(2) : 'N/A'}, Y: ${acc.y ? acc.y.toFixed(2) : 'N/A'}, Z: ${acc.z ? acc.z.toFixed(2) : 'N/A'}`;
+                const value = `X: ${acc.x ? acc.x.toFixed(2) : 'N/A'}, Y: ${acc.y ? acc.y.toFixed(2) : 'N/A'}, Z: ${acc.z ? acc.z.toFixed(2) : 'N/A'}`;
+                updateInfoWithEffect('device-motion', value);
             });
         } else {
             document.getElementById('device-motion').textContent = 'Not supported';
         }
+        
+        // Screen orientation
+        if ('screen' in window && 'orientation' in screen) {
+            document.getElementById('screen-orientation').textContent = `${screen.orientation.type}, ${screen.orientation.angle}°`;
+            screen.orientation.addEventListener('change', () => {
+                document.getElementById('screen-orientation').textContent = `${screen.orientation.type}, ${screen.orientation.angle}°`;
+            });
+        } else {
+            document.getElementById('screen-orientation').textContent = 'Not supported';
+        }
+        
+        // Wake lock
+        if ('wakeLock' in navigator) {
+            document.getElementById('wake-lock').textContent = 'Supported';
+        } else {
+            document.getElementById('wake-lock').textContent = 'Not supported';
+        }
+        
+        let wakeLock = null;
+        document.getElementById('test-wake-lock').addEventListener('click', async () => {
+            try {
+                wakeLock = await navigator.wakeLock.request('screen');
+                document.getElementById('wake-lock').textContent = 'Active';
+                wakeLock.addEventListener('release', () => {
+                    document.getElementById('wake-lock').textContent = 'Released';
+                });
+            } catch (err) {
+                document.getElementById('wake-lock').textContent = `Error: ${err.message}`;
+            }
+        });
         
         // Network info
         if ('connection' in navigator) {
@@ -384,6 +1365,19 @@
             document.getElementById('downlink').textContent = connection.downlink ? `${connection.downlink} Mbps` : 'Unknown';
             document.getElementById('rtt').textContent = connection.rtt ? `${connection.rtt} ms` : 'Unknown';
             document.getElementById('save-data').textContent = connection.saveData ? 'Enabled' : 'Disabled';
+            document.getElementById('network-state').textContent = navigator.onLine ? 'Online' : 'Offline';
+            
+            if ('ontypechange' in connection) {
+                connection.addEventListener('typechange', updateNetworkInfo);
+            }
+            
+            function updateNetworkInfo() {
+                document.getElementById('connection-type').textContent = connection.type || 'Unknown';
+                document.getElementById('effective-connection').textContent = connection.effectiveType || 'Unknown';
+                document.getElementById('downlink').textContent = connection.downlink ? `${connection.downlink} Mbps` : 'Unknown';
+                document.getElementById('rtt').textContent = connection.rtt ? `${connection.rtt} ms` : 'Unknown';
+                document.getElementById('network-state').textContent = navigator.onLine ? 'Online' : 'Offline';
+            }
         } else {
             document.getElementById('connection-type').textContent = 'Not supported';
             document.getElementById('effective-connection').textContent = 'Not supported';
@@ -392,35 +1386,90 @@
             document.getElementById('save-data').textContent = 'Not supported';
         }
         
+        // Network type detection
+        function detectNetworkType() {
+            const connection = navigator.connection || {};
+            let type = 'Unknown';
+            
+            if (connection.effectiveType) {
+                type = connection.effectiveType;
+                if (connection.saveData) type += ' (Data Saver)';
+            } else if (navigator.onLine) {
+                type = 'Online (type unknown)';
+            } else {
+                type = 'Offline';
+            }
+            
+            document.getElementById('network-type').textContent = type;
+        }
+        detectNetworkType();
+        
         // Location info
         document.getElementById('timezone').textContent = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        document.getElementById('local-time').textContent = new Date().toString();
+        updateLocalTime();
+        setInterval(updateLocalTime, 1000);
+        
+        function updateLocalTime() {
+            const now = new Date();
+            document.getElementById('local-time').textContent = now.toLocaleString();
+            document.getElementById('timezone-offset').textContent = `UTC${now.getTimezoneOffset() / -60 >= 0 ? '+' : ''}${now.getTimezoneOffset() / -60}`;
+        }
         
         document.getElementById('request-geolocation').addEventListener('click', () => {
             if ('geolocation' in navigator) {
                 navigator.geolocation.getCurrentPosition(
                     position => {
-                        document.getElementById('geolocation').textContent = 
-                            `Lat: ${position.coords.latitude}, Long: ${position.coords.longitude}, Accuracy: ${position.coords.accuracy}m`;
+                        const value = `Lat: ${position.coords.latitude}, Long: ${position.coords.longitude}, Accuracy: ${position.coords.accuracy}m`;
+                        updateInfoWithEffect('geolocation', value);
                     },
                     error => {
-                        document.getElementById('geolocation').textContent = `Error: ${error.message}`;
+                        updateInfoWithEffect('geolocation', `Error: ${error.message}`);
                     }
                 );
             } else {
-                document.getElementById('geolocation').textContent = 'Geolocation not supported';
+                updateInfoWithEffect('geolocation', 'Geolocation not supported');
             }
         });
         
-        // Get IP address (using a third-party service)
+        // Get IP address and geolocation
         fetch('https://api.ipify.org?format=json')
             .then(response => response.json())
             .then(data => {
                 document.getElementById('ip-address').textContent = data.ip;
+                
+                // Get geolocation from IP
+                return fetch(`https://ipapi.co/${data.ip}/json/`);
+            })
+            .then(response => response.json())
+            .then(geoData => {
+                let geoInfo = [];
+                if (geoData.city) geoInfo.push(geoData.city);
+                if (geoData.region) geoInfo.push(geoData.region);
+                if (geoData.country_name) geoInfo.push(geoData.country_name);
+                if (geoData.postal) geoInfo.push(`Postal: ${geoData.postal}`);
+                
+                document.getElementById('ip-geolocation').textContent = geoInfo.join(', ') || 'Unknown';
             })
             .catch(() => {
                 document.getElementById('ip-address').textContent = 'Could not determine IP address';
+                document.getElementById('ip-geolocation').textContent = 'Unknown';
             });
+        
+        // Date/time formats
+        const dateFormat = new Intl.DateTimeFormat().resolvedOptions();
+        document.getElementById('date-format').textContent = `${dateFormat.day}-${dateFormat.month}-${dateFormat.year}`;
+        document.getElementById('time-format').textContent = dateFormat.hour12 ? '12-hour' : '24-hour';
+        document.getElementById('first-day-week').textContent = new Intl.DateTimeFormat(undefined, { weekday: 'long' }).format(new Date(2023, 0, 1));
+        
+        // Display preferences
+        const prefersColorScheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'Dark' : 'Light';
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'Reduced' : 'Normal';
+        const prefersContrast = window.matchMedia('(prefers-contrast: more)').matches ? 'More' : 
+                              window.matchMedia('(prefers-contrast: less)').matches ? 'Less' : 'Normal';
+        
+        document.getElementById('color-scheme').textContent = prefersColorScheme;
+        document.getElementById('reduced-motion').textContent = prefersReducedMotion;
+        document.getElementById('contrast-preference').textContent = prefersContrast;
         
         // Storage info
         document.getElementById('local-storage').textContent = 'localStorage' in window ? 'Supported' : 'Not supported';
@@ -428,6 +1477,20 @@
         document.getElementById('indexeddb').textContent = 'indexedDB' in window ? 'Supported' : 'Not supported';
         document.getElementById('websql').textContent = 'openDatabase' in window ? 'Supported' : 'Not supported';
         document.getElementById('cache-api').textContent = 'caches' in window ? 'Supported' : 'Not supported';
+        document.getElementById('service-worker').textContent = 'serviceWorker' in navigator ? 'Supported' : 'Not supported';
+        document.getElementById('cookie-store').textContent = 'cookieStore' in window ? 'Supported' : 'Not supported';
+        
+        // Check storage quota
+        if ('storage' in navigator && 'estimate' in navigator.storage) {
+            navigator.storage.estimate().then(estimate => {
+                const quotaGB = (estimate.quota / 1024 / 1024 / 1024).toFixed(2);
+                const usageGB = (estimate.usage / 1024 / 1024 / 1024).toFixed(2);
+                const usagePercent = ((estimate.usage / estimate.quota) * 100).toFixed(1);
+                
+                document.getElementById('storage-quota').textContent = `${quotaGB} GB`;
+                document.getElementById('storage-usage').textContent = `${usageGB} GB (${usagePercent}%)`;
+            });
+        }
         
         // Cookies
         if (document.cookie) {
@@ -444,6 +1507,11 @@
             document.getElementById('cookies-list').innerHTML = '<li>No cookies found</li>';
         }
         
+        // Tracking protection
+        document.getElementById('tracking-protection').textContent = 'Not detectable';
+        document.getElementById('third-party-cookies').textContent = 'Not detectable';
+        document.getElementById('cookie-behavior').textContent = 'Not detectable';
+        
         // WebGL info
         const canvas = document.createElement('canvas');
         const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
@@ -453,30 +1521,206 @@
             if (debugInfo) {
                 document.getElementById('webgl-vendor').textContent = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
                 document.getElementById('webgl-renderer').textContent = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+                
+                // WebGL fingerprint
+                const webglFingerprint = [
+                    gl.getParameter(gl.VERSION),
+                    gl.getParameter(gl.SHADING_LANGUAGE_VERSION),
+                    gl.getParameter(gl.VENDOR),
+                    gl.getParameter(gl.RENDERER)
+                ].join('|');
+                document.getElementById('webgl-fingerprint').textContent = webglFingerprint;
             } else {
                 document.getElementById('webgl-vendor').textContent = 'Vendor info not available';
                 document.getElementById('webgl-renderer').textContent = 'Renderer info not available';
             }
+            
+            document.getElementById('webgl-version').textContent = gl.getParameter(gl.VERSION);
+            document.getElementById('gpu-info').textContent = gl.getParameter(gl.RENDERER);
+            document.getElementById('max-texture-size').textContent = gl.getParameter(gl.MAX_TEXTURE_SIZE);
         } else {
             document.getElementById('webgl-vendor').textContent = 'WebGL not supported';
             document.getElementById('webgl-renderer').textContent = 'WebGL not supported';
         }
         
+        // Canvas fingerprinting
+        function getCanvasFingerprint() {
+            try {
+                const canvas1 = document.getElementById('canvas-1');
+                const ctx1 = canvas1.getContext('2d');
+                ctx1.font = '14px Arial';
+                ctx1.fillStyle = '#f60';
+                ctx1.fillRect(0, 0, 50, 30);
+                ctx1.fillStyle = '#069';
+                ctx1.fillText('Canvas', 10, 20);
+                
+                const canvas2 = document.getElementById('canvas-2');
+                const ctx2 = canvas2.getContext('2d');
+                ctx2.font = '14px Arial';
+                ctx2.fillStyle = 'rgba(200, 50, 100, 0.7)';
+                ctx2.fillRect(0, 0, 100, 30);
+                ctx2.strokeStyle = 'rgb(100, 200, 50)';
+                ctx2.strokeText('Fingerprint', 10, 20);
+                
+                const canvas3 = document.getElementById('canvas-3');
+                const ctx3 = canvas3.getContext('2d');
+                ctx3.fillStyle = 'rgb(255, 0, 0)';
+                ctx3.fillRect(0, 0, 100, 30);
+                ctx3.fillStyle = 'rgb(0, 255, 0)';
+                ctx3.fillRect(10, 10, 80, 10);
+                
+                const fingerprint = [
+                    canvas1.toDataURL(),
+                    canvas2.toDataURL(),
+                    canvas3.toDataURL()
+                ].join('|').substring(0, 100) + '...';
+                
+                document.getElementById('canvas-fingerprint').textContent = fingerprint;
+                document.getElementById('canvas-fingerprint-text').textContent = fingerprint.substring(0, 50) + '...';
+            } catch (e) {
+                document.getElementById('canvas-fingerprint').textContent = 'Error generating fingerprint';
+            }
+        }
+        getCanvasFingerprint();
+        
+        // Audio fingerprint
+        function getAudioFingerprint() {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const analyser = audioContext.createAnalyser();
+                const gainNode = audioContext.createGain();
+                const scriptProcessor = audioContext.createScriptProcessor(4096, 1, 1);
+                
+                oscillator.type = 'triangle';
+                oscillator.connect(analyser);
+                analyser.connect(scriptProcessor);
+                scriptProcessor.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                let fingerprint = '';
+                
+                scriptProcessor.onaudioprocess = function(e) {
+                    const inputBuffer = e.inputBuffer;
+                    const inputData = inputBuffer.getChannelData(0);
+                    
+                    // Simple fingerprint - just take some sample values
+                    fingerprint = [
+                        inputData[0],
+                        inputData[100],
+                        inputData[500],
+                        inputData[1000]
+                    ].join(',');
+                    
+                    document.getElementById('audio-fingerprint').textContent = fingerprint;
+                    
+                    // Clean up
+                    oscillator.disconnect();
+                    analyser.disconnect();
+                    scriptProcessor.disconnect();
+                    gainNode.disconnect();
+                };
+                
+                oscillator.start(0);
+                setTimeout(() => oscillator.stop(), 100);
+            } catch (e) {
+                document.getElementById('audio-fingerprint').textContent = 'Error generating audio fingerprint';
+            }
+        }
+        
+        if ('AudioContext' in window || 'webkitAudioContext' in window) {
+            document.getElementById('audio-context').textContent = 'Supported';
+            document.getElementById('audio-sample-rate').textContent = new (window.AudioContext || window.webkitAudioContext)().sampleRate;
+            getAudioFingerprint();
+        } else {
+            document.getElementById('audio-context').textContent = 'Not supported';
+            document.getElementById('audio-sample-rate').textContent = 'N/A';
+        }
+        
+        // WebRTC
+        if ('RTCPeerConnection' in window) {
+            document.getElementById('webrtc-support').textContent = 'Supported';
+            
+            try {
+                const pc = new RTCPeerConnection({iceServers: []});
+                pc.createDataChannel('test');
+                pc.createOffer().then(offer => {
+                    pc.setLocalDescription(offer);
+                });
+                
+                pc.onicecandidate = (ice) => {
+                    if (ice.candidate) {
+                        const candidate = ice.candidate.candidate;
+                        if (candidate.includes('udp') || candidate.includes('UDP')) {
+                            const ipMatch = candidate.match(/([0-9]{1,3}(\.[0-9]{1,3}){3}|[a-f0-9]{1,4}(:[a-f0-9]{1,4}){7})/);
+                            if (ipMatch) {
+                                document.getElementById('webrtc-ip').textContent = `Possible IP leak: ${ipMatch[0]}`;
+                            }
+                        }
+                    }
+                };
+            } catch (e) {
+                document.getElementById('webrtc-ip').textContent = 'Error checking for IP leak';
+            }
+        } else {
+            document.getElementById('webrtc-support').textContent = 'Not supported';
+        }
+        
+        // Gamepad API
+        if ('getGamepads' in navigator) {
+            document.getElementById('gamepad-api').textContent = 'Supported';
+            
+            document.getElementById('test-gamepad').addEventListener('click', () => {
+                const gamepads = navigator.getGamepads();
+                if (gamepads[0]) {
+                    document.getElementById('gamepad-api').textContent = `Connected: ${gamepads[0].id}`;
+                } else {
+                    document.getElementById('gamepad-api').textContent = 'No gamepad detected';
+                }
+            });
+            
+            window.addEventListener('gamepadconnected', (e) => {
+                document.getElementById('gamepad-api').textContent = `Connected: ${e.gamepad.id}`;
+            });
+            
+            window.addEventListener('gamepaddisconnected', (e) => {
+                document.getElementById('gamepad-api').textContent = 'Disconnected';
+            });
+        } else {
+            document.getElementById('gamepad-api').textContent = 'Not supported';
+        }
+        
         // Media capabilities
-        document.getElementById('audio-context').textContent = 'AudioContext' in window ? 'Supported' : 'Not supported';
+        document.getElementById('media-session').textContent = 'mediaSession' in navigator ? 'Supported' : 'Not supported';
+        document.getElementById('media-capabilities').textContent = 'mediaCapabilities' in navigator ? 'Supported' : 'Not supported';
+        
+        if ('mediaDevices' in navigator && 'enumerateDevices' in navigator.mediaDevices) {
+            navigator.mediaDevices.enumerateDevices()
+                .then(devices => {
+                    const mediaInfo = devices.map(device => {
+                        return `${device.kind}: ${device.label || 'Unknown'}`;
+                    }).join('; ');
+                    document.getElementById('media-devices').textContent = mediaInfo || 'No devices found';
+                })
+                .catch(() => {
+                    document.getElementById('media-devices').textContent = 'Could not access devices';
+                });
+        } else {
+            document.getElementById('media-devices').textContent = 'Not supported';
+        }
         
         document.getElementById('request-microphone').addEventListener('click', () => {
             if ('mediaDevices' in navigator && 'getUserMedia' in navigator.mediaDevices) {
                 navigator.mediaDevices.getUserMedia({ audio: true })
                     .then(stream => {
-                        document.getElementById('microphone').textContent = 'Access granted';
+                        updateInfoWithEffect('microphone', 'Access granted');
                         stream.getTracks().forEach(track => track.stop());
                     })
                     .catch(error => {
-                        document.getElementById('microphone').textContent = `Error: ${error.message}`;
+                        updateInfoWithEffect('microphone', `Error: ${error.message}`);
                     });
             } else {
-                document.getElementById('microphone').textContent = 'Not supported';
+                updateInfoWithEffect('microphone', 'Not supported');
             }
         });
         
@@ -484,19 +1728,150 @@
             if ('mediaDevices' in navigator && 'getUserMedia' in navigator.mediaDevices) {
                 navigator.mediaDevices.getUserMedia({ video: true })
                     .then(stream => {
-                        document.getElementById('camera').textContent = 'Access granted';
+                        updateInfoWithEffect('camera', 'Access granted');
                         stream.getTracks().forEach(track => track.stop());
                     })
                     .catch(error => {
-                        document.getElementById('camera').textContent = `Error: ${error.message}`;
+                        updateInfoWithEffect('camera', `Error: ${error.message}`);
                     });
             } else {
-                document.getElementById('camera').textContent = 'Not supported';
+                updateInfoWithEffect('camera', 'Not supported');
             }
         });
         
-        // Other info
-        document.getElementById('referrer').textContent = document.referrer || 'No referrer';
+        // Speech APIs
+        document.getElementById('speech-synthesis').textContent = 'speechSynthesis' in window ? 'Supported' : 'Not supported';
+        document.getElementById('speech-recognition').textContent = 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window ? 'Supported' : 'Not supported';
+        
+        document.getElementById('test-speech').addEventListener('click', () => {
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance('Hello, this is a test of the speech synthesis API');
+                window.speechSynthesis.speak(utterance);
+                document.getElementById('speech-synthesis').textContent = 'Speaking...';
+                setTimeout(() => {
+                    document.getElementById('speech-synthesis').textContent = 'Supported';
+                }, 3000);
+            }
+        });
+        
+        document.getElementById('test-recognition').addEventListener('click', () => {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (SpeechRecognition) {
+                const recognition = new SpeechRecognition();
+                recognition.onresult = (event) => {
+                    const transcript = event.results[0][0].transcript;
+                    document.getElementById('speech-recognition').textContent = `Heard: ${transcript}`;
+                    setTimeout(() => {
+                        document.getElementById('speech-recognition').textContent = 'Supported';
+                    }, 3000);
+                };
+                recognition.start();
+                document.getElementById('speech-recognition').textContent = 'Listening...';
+            }
+        });
+        
+        // Permissions
+        document.getElementById('notification-permission').textContent = Notification.permission;
+        document.getElementById('clipboard-permission').textContent = 'clipboard' in navigator ? 'Unknown (click to check)' : 'Not supported';
+        document.getElementById('midi-permission').textContent = 'requestMIDIAccess' in navigator ? 'Unknown' : 'Not supported';
+        document.getElementById('credential-management').textContent = 'credentials' in navigator ? 'Supported' : 'Not supported';
+        document.getElementById('payment-request').textContent = 'PaymentRequest' in window ? 'Supported' : 'Not supported';
+        document.getElementById('content-security').textContent = 'securityPolicy' in document ? 'Enabled' : 'Not detected';
+        document.getElementById('secure-context').textContent = window.isSecureContext ? 'Yes' : 'No';
+        document.getElementById('mixed-content').textContent = 'Mixed content not detectable';
+        
+        document.getElementById('request-notification').addEventListener('click', () => {
+            Notification.requestPermission().then(permission => {
+                updateInfoWithEffect('notification-permission', permission);
+            });
+        });
+        
+        document.getElementById('request-clipboard').addEventListener('click', async () => {
+            if ('clipboard' in navigator && 'readText' in navigator.clipboard) {
+                try {
+                    await navigator.clipboard.readText();
+                    updateInfoWithEffect('clipboard-permission', 'Read access granted');
+                } catch (err) {
+                    updateInfoWithEffect('clipboard-permission', `Error: ${err.message}`);
+                }
+            } else {
+                updateInfoWithEffect('clipboard-permission', 'Not supported');
+            }
+        });
+        
+        // Font detection
+        function detectFonts() {
+            const fonts = [
+                'Arial', 'Arial Black', 'Comic Sans MS', 'Courier New', 
+                'Georgia', 'Impact', 'Times New Roman', 'Trebuchet MS', 
+                'Verdana', 'Webdings', 'Andale Mono', 'Baskerville',
+                'Garamond', 'Palatino', 'Book Antiqua', 'Lucida Console',
+                'MS Gothic', 'Tahoma', 'Geneva', 'Helvetica'
+            ];
+            
+            const availableFonts = [];
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            const text = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            
+            fonts.forEach(font => {
+                context.font = '72px ' + font;
+                const metrics1 = context.measureText(text);
+                
+                context.font = '72px InvalidFontName,' + font;
+                const metrics2 = context.measureText(text);
+                
+                if (metrics1.width !== metrics2.width) {
+                    availableFonts.push(font);
+                }
+            });
+            
+            document.getElementById('font-list').textContent = availableFonts.join(', ') || 'No fonts detected';
+        }
+        detectFonts();
+        
+        // Plugins and MIME types
+        function detectPlugins() {
+            const plugins = [];
+            for (let i = 0; i < navigator.plugins.length; i++) {
+                plugins.push(navigator.plugins[i].name);
+            }
+            document.getElementById('plugins-list').textContent = plugins.join(', ') || 'No plugins detected';
+            
+            const mimeTypes = [];
+            for (let i = 0; i < navigator.mimeTypes.length; i++) {
+                mimeTypes.push(navigator.mimeTypes[i].type);
+            }
+            document.getElementById('mime-types').textContent = mimeTypes.join(', ') || 'No MIME types detected';
+        }
+        detectPlugins();
+        
+        // Device fingerprint
+        function generateDeviceFingerprint() {
+            const fingerprint = {
+                userAgent: navigator.userAgent,
+                platform: navigator.platform,
+                language: navigator.language,
+                screenWidth: screen.width,
+                screenHeight: screen.height,
+                colorDepth: screen.colorDepth,
+                pixelRatio: window.devicePixelRatio,
+                hardwareConcurrency: navigator.hardwareConcurrency,
+                deviceMemory: navigator.deviceMemory,
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                touchSupport: 'ontouchstart' in window,
+                webglVendor: gl ? gl.getParameter(gl.VENDOR) : null,
+                webglRenderer: gl ? gl.getParameter(gl.RENDERER) : null
+            };
+            
+            const fingerprintString = JSON.stringify(fingerprint)
+                .replace(/[^a-z0-9]/gi, '')
+                .substring(0, 32);
+                
+            document.getElementById('device-fingerprint').textContent = fingerprintString;
+            document.getElementById('browser-fingerprint').textContent = fingerprintString;
+        }
+        generateDeviceFingerprint();
         
         // Page load time
         window.addEventListener('load', () => {
@@ -505,23 +1880,15 @@
             document.getElementById('page-load-time').textContent = `${pageLoadTime} ms`;
         });
         
-        // Permissions
-        if ('permissions' in navigator) {
-            navigator.permissions.query({ name: 'geolocation' }).then(permissionStatus => {
-                document.getElementById('permissions').textContent = `Geolocation: ${permissionStatus.state}`;
-            });
-        } else {
-            document.getElementById('permissions').textContent = 'Permissions API not supported';
+        // Helper function to update info with visual effect
+        function updateInfoWithEffect(elementId, value) {
+            const element = document.getElementById(elementId);
+            element.textContent = value;
+            element.classList.add('updated');
+            setTimeout(() => {
+                element.classList.remove('updated');
+            }, 1000);
         }
-        
-        // Notification permission
-        document.getElementById('notification-permission').textContent = Notification.permission;
-        
-        document.getElementById('request-notification').addEventListener('click', () => {
-            Notification.requestPermission().then(permission => {
-                document.getElementById('notification-permission').textContent = permission;
-            });
-        });
     </script>
 </body>
 </html>
