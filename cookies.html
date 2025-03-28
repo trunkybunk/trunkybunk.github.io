@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced Biometric Tracking</title>
+    <title>Comprehensive Tracking Demonstration</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -92,21 +92,6 @@
             height: 250px;
             margin: 20px 0;
         }
-        .camera-container {
-            margin: 20px 0;
-            text-align: center;
-        }
-        #camera-feed {
-            max-width: 100%;
-            border-radius: 8px;
-            border: 2px solid #ddd;
-        }
-        #captured-image {
-            max-width: 100%;
-            border-radius: 8px;
-            border: 2px solid #ddd;
-            display: none;
-        }
         .status-indicator {
             display: inline-block;
             width: 12px;
@@ -124,6 +109,14 @@
             columns: 2;
             column-gap: 20px;
         }
+        #clipboard-content {
+            max-height: 200px;
+            overflow: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+        }
         @media (max-width: 768px) {
             .feature-list {
                 columns: 1;
@@ -134,11 +127,11 @@
     <script src="https://cdn.jsdelivr.net/npm/mathjs@9.4.4/dist/math.min.js"></script>
 </head>
 <body>
-    <h1>Advanced Biometric Tracking Demonstration</h1>
+    <h1>Comprehensive Tracking Demonstration</h1>
     
     <div id="consent-banner" class="consent-banner">
         <h2>Tracking Consent</h2>
-        <p>This demonstration uses device sensors and camera (with your permission) to analyze posture and movement. All processing happens in your browser - no data is sent to any server unless you explicitly export it.</p>
+        <p>This demonstration uses device sensors and clipboard access (with your permission) to analyze posture, movement, and clipboard content. All processing happens in your browser.</p>
         <button id="accept-btn" class="btn btn-accept">Accept Tracking</button>
         <button id="reject-btn" class="btn btn-reject">Reject Tracking</button>
     </div>
@@ -186,12 +179,8 @@
                             <td id="motion-status">Checking...</td>
                         </tr>
                         <tr>
-                            <td>Camera Access</td>
-                            <td id="camera-status">Not requested</td>
-                        </tr>
-                        <tr>
-                            <td>Last Image Capture</td>
-                            <td id="last-capture">Never</td>
+                            <td>Clipboard Access</td>
+                            <td id="clipboard-status">Not requested</td>
                         </tr>
                     </table>
                 </div>
@@ -239,19 +228,17 @@
             <div id="movement-features"></div>
         </div>
         
-        <div class="section" id="camera-section">
-            <h3>Camera Integration</h3>
-            <div id="camera-consent" class="camera-container">
-                <p>Would you like to enable camera analysis for enhanced posture detection?</p>
-                <button id="enable-camera-btn" class="btn btn-accept">Enable Camera</button>
-                <button id="disable-camera-btn" class="btn btn-reject">No Thanks</button>
+        <div class="section" id="clipboard-section">
+            <h3>Clipboard Integration</h3>
+            <div id="clipboard-consent">
+                <p>Would you like to enable clipboard monitoring?</p>
+                <button id="enable-clipboard-btn" class="btn btn-accept">Enable Clipboard</button>
+                <button id="disable-clipboard-btn" class="btn btn-reject">No Thanks</button>
             </div>
-            <div id="camera-active" class="hidden camera-container">
-                <video id="camera-feed" autoplay playsinline></video>
-                <button id="capture-btn" class="btn">Capture Image</button>
-                <canvas id="canvas" class="hidden"></canvas>
-                <img id="captured-image" alt="Captured image">
-                <div id="image-analysis"></div>
+            <div id="clipboard-active" class="hidden">
+                <button id="read-clipboard-btn" class="btn">Read Clipboard Now</button>
+                <h4>Clipboard History</h4>
+                <div id="clipboard-content"></div>
             </div>
         </div>
         
@@ -271,12 +258,10 @@
         const rejectBtn = document.getElementById('reject-btn');
         const clearBtn = document.getElementById('clear-btn');
         const exportBtn = document.getElementById('export-btn');
-        const enableCameraBtn = document.getElementById('enable-camera-btn');
-        const disableCameraBtn = document.getElementById('disable-camera-btn');
-        const captureBtn = document.getElementById('capture-btn');
-        const cameraFeed = document.getElementById('camera-feed');
-        const canvas = document.getElementById('canvas');
-        const capturedImage = document.getElementById('captured-image');
+        const enableClipboardBtn = document.getElementById('enable-clipboard-btn');
+        const disableClipboardBtn = document.getElementById('disable-clipboard-btn');
+        const readClipboardBtn = document.getElementById('read-clipboard-btn');
+        const clipboardContent = document.getElementById('clipboard-content');
         
         // State variables
         let orientationChart, motionChart, fftChart;
@@ -298,8 +283,8 @@
         };
         
         let trackingStartTime = new Date();
-        let cameraStream = null;
-        let isCameraEnabled = false;
+        let isClipboardEnabled = false;
+        let clipboardHistory = [];
         
         // Check existing consent
         const hasConsent = getCookie('tracking_consent') === 'true';
@@ -307,6 +292,8 @@
         if (hasConsent) {
             consentBanner.style.display = 'none';
             content.classList.remove('hidden');
+            trackingStartTime = new Date();
+            document.getElementById('tracking-start-time').textContent = trackingStartTime.toLocaleString();
             initializeTracking();
         }
         
@@ -335,13 +322,13 @@
         
         exportBtn.addEventListener('click', exportData);
         
-        enableCameraBtn.addEventListener('click', enableCamera);
-        disableCameraBtn.addEventListener('click', () => {
-            document.getElementById('camera-consent').classList.add('hidden');
-            document.getElementById('camera-status').textContent = 'User declined';
+        enableClipboardBtn.addEventListener('click', enableClipboard);
+        disableClipboardBtn.addEventListener('click', () => {
+            document.getElementById('clipboard-consent').classList.add('hidden');
+            document.getElementById('clipboard-status').textContent = 'User declined';
         });
         
-        captureBtn.addEventListener('click', captureImage);
+        readClipboardBtn.addEventListener('click', readClipboard);
         
         // Cookie functions
         function setCookie(name, value, days) {
@@ -376,12 +363,8 @@
             deleteCookie('tracking_consent');
             deleteCookie('visits_data');
             deleteCookie('current_visit');
-            deleteCookie('camera_consent');
-            
-            // Stop camera stream if active
-            if (cameraStream) {
-                cameraStream.getTracks().forEach(track => track.stop());
-            }
+            deleteCookie('clipboard_data');
+            deleteCookie('clipboard_consent');
         }
         
         // Initialization function
@@ -410,14 +393,13 @@
                     confidence: 0,
                     features: {}
                 },
-                camera: {
+                clipboard: {
                     enabled: false,
-                    images: []
+                    history: []
                 }
             };
             
             // Display basic info
-            document.getElementById('tracking-start-time').textContent = trackingStartTime.toLocaleString();
             document.getElementById('current-device').textContent = deviceInfo.deviceType;
             document.getElementById('current-browser').textContent = deviceInfo.browser;
             document.getElementById('current-resolution').textContent = deviceInfo.screenResolution;
@@ -491,13 +473,10 @@
                     '<p>Motion tracking requires a mobile device.</p>';
             }
             
-            // Check camera consent
-            if (getCookie('camera_consent') === 'true') {
-                enableCamera();
+            // Check clipboard consent
+            if (getCookie('clipboard_consent') === 'true') {
+                enableClipboard();
             }
-            
-            // Store initial visit data
-            setCookie('current_visit', JSON.stringify(visitData), 1);
             
             // Load previous visits
             loadPreviousVisits(visitData);
@@ -686,7 +665,7 @@
             orientationData.gamma.push(gamma);
             
             // Keep data size manageable
-            if (orientationData.timestamps.length > 100) {
+            if (orientationData.timestamps.length > 50) {
                 orientationData.timestamps.shift();
                 orientationData.alpha.shift();
                 orientationData.beta.shift();
@@ -695,18 +674,22 @@
             
             updateOrientationChart();
             
-            // Make posture prediction
-            const posturePrediction = predictPosture(orientationData);
-            document.getElementById('posture-prediction').textContent = posturePrediction.prediction;
-            document.getElementById('posture-confidence').textContent = posturePrediction.confidence;
+            // Make posture prediction (only if we have enough data)
+            if (orientationData.beta.length >= 10) {
+                const posturePrediction = predictPosture(orientationData);
+                document.getElementById('posture-prediction').textContent = posturePrediction.prediction;
+                document.getElementById('posture-confidence').textContent = posturePrediction.confidence;
+                displayPostureFeatures(posturePrediction.features);
+                
+                // Update current visit data
+                updateCurrentVisitData({
+                    posture: posturePrediction
+                });
+            }
             
-            // Display features
-            displayPostureFeatures(posturePrediction.features);
-            
-            // Update current visit data
+            // Always update raw orientation data
             updateCurrentVisitData({
-                rawOrientation: { alpha, beta, gamma, timestamp },
-                posture: posturePrediction
+                rawOrientation: { alpha, beta, gamma, timestamp }
             });
         }
         
@@ -751,16 +734,21 @@
             
             updateMotionChart();
             
-            // Make movement prediction
-            const movementPrediction = predictMovement(motionData);
+            // Make movement prediction (only if we have enough data)
+            if (motionData.accelerationX.length >= 20) {
+                const movementPrediction = predictMovement(motionData);
+                document.getElementById('movement-prediction').textContent = movementPrediction.prediction;
+                document.getElementById('movement-confidence').textContent = movementPrediction.confidence;
+                displayMovementFeatures(movementPrediction.features);
+                updateFFTChart(movementPrediction.features.magnitude.fft);
+                
+                // Update current visit data
+                updateCurrentVisitData({
+                    movement: movementPrediction
+                });
+            }
             
-            document.getElementById('movement-prediction').textContent = movementPrediction.prediction;
-            document.getElementById('movement-confidence').textContent = movementPrediction.confidence;
-            
-            // Display features
-            displayMovementFeatures(movementPrediction.features);
-            
-            // Update current visit data
+            // Always update raw motion data
             updateCurrentVisitData({
                 rawMotion: {
                     acceleration: { x: accel.x, y: accel.y, z: accel.z },
@@ -776,21 +764,12 @@
                     },
                     interval,
                     timestamp
-                },
-                movement: movementPrediction
+                }
             });
         }
         
         // Improved Prediction Algorithms
         function predictPosture(orientationData) {
-            if (orientationData.beta.length < 5) {
-                return {
-                    prediction: "Calibrating...",
-                    confidence: 0,
-                    features: {}
-                };
-            }
-            
             // Calculate features over a window of recent readings
             const windowSize = Math.min(20, orientationData.beta.length);
             const recentBeta = orientationData.beta.slice(-windowSize);
@@ -869,14 +848,6 @@
         }
         
         function predictMovement(motionData) {
-            if (motionData.accelerationX.length < 20) {
-                return {
-                    prediction: "Calibrating...",
-                    confidence: 0,
-                    features: {}
-                };
-            }
-            
             // Calculate magnitude of acceleration
             const magnitudes = [];
             for (let i = 0; i < motionData.accelerationX.length; i++) {
@@ -920,9 +891,6 @@
                 }
                 rotFeatures = calcFeatures(rotMagnitudes);
             }
-            
-            // Update FFT chart
-            updateFFTChart(magFeatures.fft);
             
             // Movement classification using a decision tree approach with multiple features
             let prediction = 'Unknown';
@@ -1099,115 +1067,128 @@
             document.getElementById('movement-features').innerHTML = html;
         }
         
-        // Camera functions
-        async function enableCamera() {
+        // Clipboard functions
+        async function enableClipboard() {
             try {
-                cameraStream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { 
-                        facingMode: 'user',
-                        width: { ideal: 640 },
-                        height: { ideal: 480 }
-                    },
-                    audio: false
-                });
+                // Request clipboard read permission
+                const permissionStatus = await navigator.permissions.query({ name: 'clipboard-read' });
                 
-                cameraFeed.srcObject = cameraStream;
-                document.getElementById('camera-consent').classList.add('hidden');
-                document.getElementById('camera-active').classList.remove('hidden');
-                document.getElementById('camera-status').innerHTML = 
-                    '<span class="status-indicator status-active"></span> Active';
-                
-                setCookie('camera_consent', 'true', 365);
-                isCameraEnabled = true;
-                
-                // Update current visit data
-                updateCurrentVisitData({
-                    camera: {
-                        enabled: true,
-                        images: []
-                    }
-                });
+                if (permissionStatus.state === 'granted' || permissionStatus.state === 'prompt') {
+                    setCookie('clipboard_consent', 'true', 365);
+                    document.getElementById('clipboard-consent').classList.add('hidden');
+                    document.getElementById('clipboard-active').classList.remove('hidden');
+                    document.getElementById('clipboard-status').innerHTML = 
+                        '<span class="status-indicator status-active"></span> Active';
+                    isClipboardEnabled = true;
+                    
+                    // Load any existing clipboard history
+                    loadClipboardHistory();
+                    
+                    // Update current visit data
+                    updateCurrentVisitData({
+                        clipboard: {
+                            enabled: true,
+                            history: clipboardHistory
+                        }
+                    });
+                } else {
+                    throw new Error('Permission not granted');
+                }
             } catch (error) {
-                console.error('Camera error:', error);
-                document.getElementById('camera-status').innerHTML = 
+                console.error('Clipboard error:', error);
+                document.getElementById('clipboard-status').innerHTML = 
                     '<span class="status-indicator status-inactive"></span> Error: ' + error.message;
             }
         }
         
-        function captureImage() {
-            if (!cameraStream) return;
-            
-            // Set canvas size to match video
-            canvas.width = cameraFeed.videoWidth;
-            canvas.height = cameraFeed.videoHeight;
-            
-            // Draw current video frame to canvas
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(cameraFeed, 0, 0, canvas.width, canvas.height);
-            
-            // Convert to data URL and display
-            const imageDataUrl = canvas.toDataURL('image/jpeg', 0.8);
-            capturedImage.src = imageDataUrl;
-            capturedImage.style.display = 'block';
-            
-            // Update last capture time
-            const now = new Date();
-            document.getElementById('last-capture').textContent = now.toLocaleTimeString();
-            
-            // Simple image analysis (for demonstration)
-            analyzeImage(canvas);
-            
-            // Store image in visit data
-            updateCurrentVisitData({
-                camera: {
-                    images: [{
-                        timestamp: now.toISOString(),
-                        imageData: imageDataUrl,
-                        analysis: {} // Would contain analysis results in a real app
-                    }]
-                }
-            });
-        }
-        
-        function analyzeImage(canvas) {
-            const ctx = canvas.getContext('2d');
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const data = imageData.data;
-            
-            // Simple brightness analysis
-            let brightness = 0;
-            for (let i = 0; i < data.length; i += 4) {
-                brightness += (data[i] + data[i+1] + data[i+2]) / 3;
-            }
-            brightness = brightness / (data.length / 4);
-            
-            // Simple edge detection (very basic)
-            let edgeScore = 0;
-            const edgeThreshold = 30;
-            for (let y = 1; y < canvas.height; y++) {
-                for (let x = 1; x < canvas.width; x++) {
-                    const idx = (y * canvas.width + x) * 4;
-                    const prevIdx = ((y-1) * canvas.width + (x-1)) * 4;
-                    
-                    const diffR = Math.abs(data[idx] - data[prevIdx]);
-                    const diffG = Math.abs(data[idx+1] - data[prevIdx+1]);
-                    const diffB = Math.abs(data[idx+2] - data[prevIdx+2]);
-                    
-                    if ((diffR + diffG + diffB) / 3 > edgeThreshold) {
-                        edgeScore++;
+        async function readClipboard() {
+            try {
+                const clipboardItems = await navigator.clipboard.read();
+                for (const clipboardItem of clipboardItems) {
+                    for (const type of clipboardItem.types) {
+                        const blob = await clipboardItem.getType(type);
+                        
+                        if (type === 'text/plain') {
+                            const text = await blob.text();
+                            addToClipboardHistory({
+                                type: 'text',
+                                content: text,
+                                timestamp: new Date().toISOString()
+                            });
+                        } else if (type.startsWith('image/')) {
+                            const imageUrl = URL.createObjectURL(blob);
+                            addToClipboardHistory({
+                                type: 'image',
+                                content: imageUrl,
+                                timestamp: new Date().toISOString()
+                            });
+                        }
                     }
                 }
+            } catch (error) {
+                console.error('Failed to read clipboard:', error);
+                alert('Failed to read clipboard. Make sure you have granted permission.');
             }
-            edgeScore = edgeScore / (canvas.width * canvas.height) * 100;
+        }
+        
+        function addToClipboardHistory(item) {
+            clipboardHistory.push(item);
             
-            // Display analysis results
-            document.getElementById('image-analysis').innerHTML = `
-                <strong>Image Analysis:</strong>
-                <ul>
-                    <li>Average Brightness: ${Math.round(brightness)}/255</li>
-                    <li>Edge Score: ${edgeScore.toFixed(1)}%</li>
-                </ul>
-            `;
+            // Update display
+            displayClipboardHistory();
+            
+            // Update current visit data
+            updateCurrentVisitData({
+                clipboard: {
+                    history: clipboardHistory
+                }
+            });
+            
+            // Save to cookie
+            setCookie('clipboard_data', JSON.stringify(clipboardHistory), 1);
+        }
+        
+        function loadClipboardHistory() {
+            const clipboardCookie = getCookie('clipboard_data');
+            if (clipboardCookie) {
+                try {
+                    clipboardHistory = JSON.parse(clipboardCookie);
+                    displayClipboardHistory();
+                } catch (e) {
+                    console.error('Error parsing clipboard data:', e);
+                }
+            }
+        }
+        
+        function displayClipboardHistory() {
+            let html = '';
+            
+            if (clipboardHistory.length === 0) {
+                html = '<p>No clipboard items recorded yet.</p>';
+            } else {
+                html = '<ul>';
+                for (const item of clipboardHistory.slice().reverse()) {
+                    if (item.type === 'text') {
+                        html += `<li><strong>${new Date(item.timestamp).toLocaleString()}</strong><br>`;
+                        html += `<div style="white-space: pre-wrap; overflow-wrap: break-word;">${escapeHtml(item.content)}</div></li>`;
+                    } else if (item.type === 'image') {
+                        html += `<li><strong>${new Date(item.timestamp).toLocaleString()}</strong><br>`;
+                        html += `<img src="${item.content}" style="max-width: 100%; max-height: 100px;"></li>`;
+                    }
+                }
+                html += '</ul>';
+            }
+            
+            clipboardContent.innerHTML = html;
+        }
+        
+        function escapeHtml(unsafe) {
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
         }
         
         // Data management
@@ -1255,7 +1236,7 @@
                 location: currentVisit.location,
                 posture: currentVisit.posture,
                 movement: currentVisit.movement,
-                camera: currentVisit.camera
+                clipboard: currentVisit.clipboard
             };
             
             visits.push(visitToStore);
@@ -1296,9 +1277,9 @@
                     locationText = visit.location;
                 }
                 
-                let cameraInfo = 'Not used';
-                if (visit.camera?.enabled) {
-                    cameraInfo = `Enabled (${visit.camera.images?.length || 0} images)`;
+                let clipboardInfo = 'Not used';
+                if (visit.clipboard?.enabled) {
+                    clipboardInfo = `Enabled (${visit.clipboard.history?.length || 0} items)`;
                 }
                 
                 visitElement.innerHTML = `
@@ -1329,8 +1310,8 @@
                             </td>
                         </tr>
                         <tr>
-                            <td>Camera</td>
-                            <td>${cameraInfo}</td>
+                            <td>Clipboard</td>
+                            <td>${clipboardInfo}</td>
                         </tr>
                     </table>
                 `;
