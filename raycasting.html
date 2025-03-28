@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Raycaster (Doom-style)</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: Arial, sans-serif;
+            color: white;
+        }
+        
+        #game-container {
+            position: relative;
+        }
+        
+        #game-canvas {
+            display: block;
+            background-color: #000;
+        }
+        
+        #info-panel {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+        
+        #controls {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="game-canvas" width="800" height="600"></canvas>
+        <div id="info-panel">
+            FPS: <span id="fps-counter">0</span> | 
+            Pos: <span id="position">0,0</span> | 
+            Angle: <span id="angle">0</span>
+        </div>
+        <div id="controls">
+            WASD to move | Arrow keys to turn | Mouse to look around
+        </div>
+    </div>
+
+    <script>
+        // Game canvas and context
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Game settings
+        const FOV = Math.PI / 3; // 60 degrees
+        const HALF_FOV = FOV / 2;
+        const NUM_RAYS = 320;
+        const MAX_DEPTH = 16;
+        const CELL_SIZE = 64;
+        const WALL_HEIGHT = 100;
+        const PLAYER_SPEED = 5;
+        const ROTATION_SPEED = 0.05;
+        
+        // Game map (1 = wall, 0 = empty space)
+        const MAP = [
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            [1, 0, 0, 0, 0, 0, 1, 0, 0, 1],
+            [1, 0, 1, 1, 0, 0, 1, 0, 0, 1],
+            [1, 0, 1, 0, 0, 0, 1, 0, 0, 1],
+            [1, 0, 1, 0, 0, 0, 0, 0, 0, 1],
+            [1, 0, 1, 0, 0, 0, 0, 0, 0, 1],
+            [1, 0, 1, 1, 1, 0, 1, 0, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+        ];
+        
+        const MAP_WIDTH = MAP[0].length;
+        const MAP_HEIGHT = MAP.length;
+        
+        // Player properties
+        const player = {
+            x: CELL_SIZE * 1.5,
+            y: CELL_SIZE * 1.5,
+            angle: Math.PI / 4,
+            speed: 0,
+            strafeSpeed: 0,
+            rotationSpeed: 0
+        };
+        
+        // Textures (simple colored walls for this demo)
+        const wallTextures = [
+            {color: '#FF0000', darkColor: '#800000'},  // Red wall
+            {color: '#00FF00', darkColor: '#008000'},  // Green wall
+            {color: '#0000FF', darkColor: '#000080'},  // Blue wall
+            {color: '#FFFF00', darkColor: '#808000'}   // Yellow wall
+        ];
+        
+        // Floor and ceiling colors
+        const floorColor = '#333333';
+        const ceilingColor = '#888888';
+        
+        // Keyboard state
+        const keys = {
+            w: false,
+            a: false,
+            s: false,
+            d: false,
+            ArrowLeft: false,
+            ArrowRight: false
+        };
+        
+        // Mouse control
+        let mouseX = 0;
+        let mouseY = 0;
+        let mouseSensitivity = 0.002;
+        
+        // Performance tracking
+        let lastTime = 0;
+        let fps = 0;
+        
+        // Event listeners
+        document.addEventListener('keydown', (e) => {
+            if (keys.hasOwnProperty(e.key)) {
+                keys[e.key] = true;
+            }
+        });
+        
+        document.addEventListener('keyup', (e) => {
+            if (keys.hasOwnProperty(e.key)) {
+                keys[e.key] = false;
+            }
+        });
+        
+        canvas.addEventListener('mousemove', (e) => {
+            mouseX = e.movementX;
+            mouseY = e.movementY;
+        });
+        
+        canvas.addEventListener('click', () => {
+            canvas.requestPointerLock();
+        });
+        
+        // Game loop
+        function gameLoop(timestamp) {
+            // Calculate FPS
+            if (lastTime) {
+                fps = Math.round(1000 / (timestamp - lastTime));
+            }
+            lastTime = timestamp;
+            
+            // Update player movement
+            updatePlayer();
+            
+            // Clear canvas
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Render 3D view
+            render3DView();
+            
+            // Render minimap (top-down view)
+            renderMiniMap();
+            
+            // Update info panel
+            document.getElementById('fps-counter').textContent = fps;
+            document.getElementById('position').textContent = 
+                `${Math.round(player.x)}, ${Math.round(player.y)}`;
+            document.getElementById('angle').textContent = 
+                `${Math.round(player.angle * 180 / Math.PI)}°`;
+            
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Update player position and rotation
+        function updatePlayer() {
+            // Handle keyboard rotation
+            if (keys.ArrowLeft) player.rotationSpeed = -ROTATION_SPEED;
+            else if (keys.ArrowRight) player.rotationSpeed = ROTATION_SPEED;
+            else player.rotationSpeed = 0;
+            
+            // Handle mouse rotation
+            if (document.pointerLockElement === canvas) {
+                player.rotationSpeed = -mouseX * mouseSensitivity;
+            }
+            
+            // Update player angle
+            player.angle += player.rotationSpeed;
+            
+            // Normalize angle
+            if (player.angle < 0) player.angle += Math.PI * 2;
+            if (player.angle > Math.PI * 2) player.angle -= Math.PI * 2;
+            
+            // Handle movement
+            const moveAngle = keys.a || keys.d ? player.angle + Math.PI / 2 : player.angle;
+            player.speed = 0;
+            player.strafeSpeed = 0;
+            
+            if (keys.w) {
+                player.speed = PLAYER_SPEED;
+            } else if (keys.s) {
+                player.speed = -PLAYER_SPEED;
+            }
+            
+            if (keys.a) {
+                player.strafeSpeed = -PLAYER_SPEED;
+            } else if (keys.d) {
+                player.strafeSpeed = PLAYER_SPEED;
+            }
+            
+            // Calculate new position
+            const newX = player.x + Math.cos(player.angle) * player.speed + 
+                         Math.cos(moveAngle) * player.strafeSpeed;
+            const newY = player.y + Math.sin(player.angle) * player.speed + 
+                         Math.sin(moveAngle) * player.strafeSpeed;
+            
+            // Check for collisions
+            if (!isWall(newX, player.y)) {
+                player.x = newX;
+            }
+            if (!isWall(player.x, newY)) {
+                player.y = newY;
+            }
+        }
+        
+        // Check if a position is a wall
+        function isWall(x, y) {
+            const cellX = Math.floor(x / CELL_SIZE);
+            const cellY = Math.floor(y / CELL_SIZE);
+            
+            if (cellX < 0 || cellX >= MAP_WIDTH || cellY < 0 || cellY >= MAP_HEIGHT) {
+                return true;
+            }
+            
+            return MAP[cellY][cellX] !== 0;
+        }
+        
+        // Render the 3D view using raycasting
+        function render3DView() {
+            // Draw ceiling
+            ctx.fillStyle = ceilingColor;
+            ctx.fillRect(0, 0, canvas.width, canvas.height / 2);
+            
+            // Draw floor
+            ctx.fillStyle = floorColor;
+            ctx.fillRect(0, canvas.height / 2, canvas.width, canvas.height / 2);
+            
+            // Cast rays
+            for (let ray = 0; ray < NUM_RAYS; ray++) {
+                // Calculate ray angle
+                const rayAngle = player.angle - HALF_FOV + (FOV / NUM_RAYS) * ray;
+                
+                // Cast ray
+                const rayResult = castRay(rayAngle);
+                
+                // Calculate wall height
+                const distance = rayResult.distance * Math.cos(rayAngle - player.angle);
+                const wallHeight = (CELL_SIZE * canvas.height) / distance;
+                
+                // Draw wall slice
+                const wallTop = (canvas.height - wallHeight) / 2;
+                const wallBottom = wallTop + wallHeight;
+                const wallX = (canvas.width / NUM_RAYS) * ray;
+                const wallWidth = canvas.width / NUM_RAYS;
+                
+                // Get wall color based on texture and distance
+                const textureIndex = rayResult.texture || 0;
+                const wallColor = distance > CELL_SIZE * 3 ? 
+                    wallTextures[textureIndex].darkColor : 
+                    wallTextures[textureIndex].color;
+                
+                ctx.fillStyle = wallColor;
+                ctx.fillRect(wallX, wallTop, wallWidth + 1, wallHeight);
+            }
+        }
+        
+        // Cast a ray and return distance to wall and wall texture
+        function castRay(angle) {
+            // Normalize angle
+            angle = normalizeAngle(angle);
+            
+            // Ray direction
+            const rayDirX = Math.cos(angle);
+            const rayDirY = Math.sin(angle);
+            
+            // Player's current cell
+            let mapX = Math.floor(player.x / CELL_SIZE);
+            let mapY = Math.floor(player.y / CELL_SIZE);
+            
+            // Length of ray from current position to next x or y-side
+            let sideDistX, sideDistY;
+            
+            // Length of ray from one x or y-side to next x or y-side
+            const deltaDistX = Math.abs(1 / rayDirX);
+            const deltaDistY = Math.abs(1 / rayDirY);
+            
+            // Direction to step in x or y direction (either +1 or -1)
+            let stepX, stepY;
+            
+            // Was a wall hit?
+            let hit = false;
+            // Was a NS or a EW wall hit?
+            let side;
+            // Texture of the wall that was hit
+            let texture = 0;
+            
+            // Calculate step and initial sideDist
+            if (rayDirX < 0) {
+                stepX = -1;
+                sideDistX = (player.x / CELL_SIZE - mapX) * deltaDistX;
+            } else {
+                stepX = 1;
+                sideDistX = (mapX + 1.0 - player.x / CELL_SIZE) * deltaDistX;
+            }
+            
+            if (rayDirY < 0) {
+                stepY = -1;
+                sideDistY = (player.y / CELL_SIZE - mapY) * deltaDistY;
+            } else {
+                stepY = 1;
+                sideDistY = (mapY + 1.0 - player.y / CELL_SIZE) * deltaDistY;
+            }
+            
+            // Perform DDA (Digital Differential Analysis)
+            while (!hit) {
+                // Jump to next map square, either in x-direction, or in y-direction
+                if (sideDistX < sideDistY) {
+                    sideDistX += deltaDistX;
+                    mapX += stepX;
+                    side = 0;
+                } else {
+                    sideDistY += deltaDistY;
+                    mapY += stepY;
+                    side = 1;
+                }
+                
+                // Check if ray has hit a wall
+                if (mapX < 0 || mapX >= MAP_WIDTH || mapY < 0 || mapY >= MAP_HEIGHT) {
+                    hit = true; // Hit the map boundary
+                    texture = 0;
+                } else if (MAP[mapY][mapX] > 0) {
+                    hit = true;
+                    texture = MAP[mapY][mapX] - 1; // Get texture index
+                }
+            }
+            
+            // Calculate distance projected on camera direction
+            let distance;
+            if (side === 0) {
+                distance = (mapX - player.x / CELL_SIZE + (1 - stepX) / 2) / rayDirX;
+            } else {
+                distance = (mapY - player.y / CELL_SIZE + (1 - stepY) / 2) / rayDirY;
+            }
+            
+            distance *= CELL_SIZE; // Convert to pixels
+            
+            return {
+                distance: distance,
+                texture: texture,
+                side: side
+            };
+        }
+        
+        // Normalize angle to be between 0 and 2*PI
+        function normalizeAngle(angle) {
+            angle = angle % (2 * Math.PI);
+            if (angle < 0) {
+                angle += 2 * Math.PI;
+            }
+            return angle;
+        }
+        
+        // Render a top-down minimap
+        function renderMiniMap() {
+            const miniMapSize = 150;
+            const cellSize = miniMapSize / Math.max(MAP_WIDTH, MAP_HEIGHT);
+            const offsetX = 10;
+            const offsetY = 10;
+            
+            // Draw map background
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.fillRect(offsetX, offsetY, miniMapSize, miniMapSize);
+            
+            // Draw walls
+            for (let y = 0; y < MAP_HEIGHT; y++) {
+                for (let x = 0; x < MAP_WIDTH; x++) {
+                    if (MAP[y][x] !== 0) {
+                        ctx.fillStyle = wallTextures[MAP[y][x] - 1].color;
+                        ctx.fillRect(
+                            offsetX + x * cellSize,
+                            offsetY + y * cellSize,
+                            cellSize,
+                            cellSize
+                        );
+                    }
+                }
+            }
+            
+            // Draw player
+            ctx.fillStyle = '#FF0000';
+            ctx.beginPath();
+            ctx.arc(
+                offsetX + (player.x / CELL_SIZE) * cellSize,
+                offsetY + (player.y / CELL_SIZE) * cellSize,
+                3, 0, Math.PI * 2
+            );
+            ctx.fill();
+            
+            // Draw player direction
+            ctx.strokeStyle = '#FF0000';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(
+                offsetX + (player.x / CELL_SIZE) * cellSize,
+                offsetY + (player.y / CELL_SIZE) * cellSize
+            );
+            ctx.lineTo(
+                offsetX + (player.x / CELL_SIZE + Math.cos(player.angle) * 2) * cellSize,
+                offsetY + (player.y / CELL_SIZE + Math.sin(player.angle) * 2) * cellSize
+            );
+            ctx.stroke();
+        }
+        
+        // Start the game
+        requestAnimationFrame(gameLoop);
+    </script>
+</body>
+</html>
