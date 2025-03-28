@@ -3,135 +3,203 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced Tracking Demonstration</title>
+    <title>Advanced Biometric Tracking</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             line-height: 1.6;
-            max-width: 900px;
+            max-width: 1000px;
             margin: 0 auto;
             padding: 20px;
-            color: #333;
+            color: #2c3e50;
+            background-color: #f9f9f9;
         }
         h1, h2, h3 {
-            color: #2c3e50;
+            color: #1a5276;
         }
         .consent-banner {
-            background-color: #f8f9fa;
-            padding: 15px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            margin-bottom: 20px;
+            background-color: #eaf2f8;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
         .btn {
-            padding: 8px 15px;
-            margin: 5px;
+            padding: 10px 20px;
+            margin: 8px;
             border: none;
-            border-radius: 4px;
+            border-radius: 6px;
             cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
         }
         .btn-accept {
-            background-color: #28a745;
+            background-color: #27ae60;
             color: white;
+        }
+        .btn-accept:hover {
+            background-color: #219955;
         }
         .btn-reject {
-            background-color: #dc3545;
+            background-color: #e74c3c;
             color: white;
         }
-        .visit-data {
-            background-color: #f0f8ff;
-            padding: 15px;
-            margin: 15px 0;
-            border-left: 4px solid #3498db;
-            border-radius: 4px;
+        .btn-reject:hover {
+            background-color: #c0392b;
+        }
+        .section {
+            background-color: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
         .data-table {
             width: 100%;
             border-collapse: collapse;
-            margin: 10px 0;
+            margin: 15px 0;
         }
         .data-table th, .data-table td {
             border: 1px solid #ddd;
-            padding: 8px;
+            padding: 12px;
             text-align: left;
         }
         .data-table th {
             background-color: #f2f2f2;
+            font-weight: bold;
         }
         .hidden {
             display: none;
         }
         .sensor-data {
-            background-color: #fffaf0;
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 4px;
-            font-family: monospace;
+            background-color: #f5f5f5;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
         }
         .prediction {
             font-weight: bold;
-            color: #2c3e50;
+            color: #1a5276;
+            font-size: 1.1em;
+            margin: 10px 0;
         }
         .confidence {
             font-style: italic;
             color: #7f8c8d;
         }
         .chart-container {
-            height: 200px;
-            margin: 15px 0;
+            height: 250px;
+            margin: 20px 0;
+        }
+        .camera-container {
+            margin: 20px 0;
+            text-align: center;
+        }
+        #camera-feed {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 2px solid #ddd;
+        }
+        #captured-image {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 2px solid #ddd;
+            display: none;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        .status-active {
+            background-color: #2ecc71;
+        }
+        .status-inactive {
+            background-color: #e74c3c;
+        }
+        .feature-list {
+            columns: 2;
+            column-gap: 20px;
+        }
+        @media (max-width: 768px) {
+            .feature-list {
+                columns: 1;
+            }
         }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjs@9.4.4/dist/math.min.js"></script>
 </head>
 <body>
-    <h1>Advanced Tracking Demonstration</h1>
+    <h1>Advanced Biometric Tracking Demonstration</h1>
     
     <div id="consent-banner" class="consent-banner">
         <h2>Tracking Consent</h2>
-        <p>This demonstration tracks device sensors with your permission to analyze posture and movement. No data leaves your browser unless you consent.</p>
+        <p>This demonstration uses device sensors and camera (with your permission) to analyze posture and movement. All processing happens in your browser - no data is sent to any server unless you explicitly export it.</p>
         <button id="accept-btn" class="btn btn-accept">Accept Tracking</button>
         <button id="reject-btn" class="btn btn-reject">Reject Tracking</button>
     </div>
     
     <div id="content" class="hidden">
-        <h2>Current Session Analysis</h2>
-        
-        <div class="visit-data">
-            <h3>Device Information</h3>
-            <table class="data-table">
-                <tr>
-                    <th>Information Type</th>
-                    <th>Value</th>
-                </tr>
-                <tr>
-                    <td>Timestamp</td>
-                    <td id="current-timestamp"></td>
-                </tr>
-                <tr>
-                    <td>Device Type</td>
-                    <td id="current-device"></td>
-                </tr>
-                <tr>
-                    <td>Browser</td>
-                    <td id="current-browser"></td>
-                </tr>
-                <tr>
-                    <td>Screen Resolution</td>
-                    <td id="current-resolution"></td>
-                </tr>
-                <tr>
-                    <td>IP Address</td>
-                    <td id="current-ip"></td>
-                </tr>
-                <tr>
-                    <td>Location</td>
-                    <td id="current-location"></td>
-                </tr>
-            </table>
+        <div class="section">
+            <h2>Current Session Analysis</h2>
+            <p><span class="status-indicator status-active"></span> Tracking active since <span id="tracking-start-time"></span></p>
+            
+            <div class="feature-list">
+                <div>
+                    <h3>Device Information</h3>
+                    <table class="data-table">
+                        <tr>
+                            <td>Device Type</td>
+                            <td id="current-device"></td>
+                        </tr>
+                        <tr>
+                            <td>Browser</td>
+                            <td id="current-browser"></td>
+                        </tr>
+                        <tr>
+                            <td>Screen Resolution</td>
+                            <td id="current-resolution"></td>
+                        </tr>
+                        <tr>
+                            <td>IP Address</td>
+                            <td id="current-ip"></td>
+                        </tr>
+                        <tr>
+                            <td>Location</td>
+                            <td id="current-location"></td>
+                        </tr>
+                    </table>
+                </div>
+                <div>
+                    <h3>Sensor Status</h3>
+                    <table class="data-table">
+                        <tr>
+                            <td>Orientation Tracking</td>
+                            <td id="orientation-status">Checking...</td>
+                        </tr>
+                        <tr>
+                            <td>Motion Tracking</td>
+                            <td id="motion-status">Checking...</td>
+                        </tr>
+                        <tr>
+                            <td>Camera Access</td>
+                            <td id="camera-status">Not requested</td>
+                        </tr>
+                        <tr>
+                            <td>Last Image Capture</td>
+                            <td id="last-capture">Never</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
         </div>
         
-        <div class="visit-data" id="orientation-section">
-            <h3>Orientation Analysis</h3>
+        <div class="section" id="orientation-section">
+            <h3>Posture Analysis</h3>
             <div class="sensor-data">
                 <strong>Raw Orientation Data:</strong><br>
                 Alpha (compass): <span id="alpha-value">--</span>°<br>
@@ -146,10 +214,11 @@
                 Posture Prediction: <span id="posture-prediction">--</span>
                 <span class="confidence">(confidence: <span id="posture-confidence">--</span>%)</span>
             </div>
+            <div id="posture-features"></div>
         </div>
         
-        <div class="visit-data" id="motion-section">
-            <h3>Motion Analysis</h3>
+        <div class="section" id="motion-section">
+            <h3>Movement Analysis</h3>
             <div class="sensor-data">
                 <strong>Raw Motion Data:</strong><br>
                 Acceleration (x,y,z): <span id="accel-values">--</span> m/s²<br>
@@ -160,16 +229,38 @@
             <div class="chart-container">
                 <canvas id="motion-chart"></canvas>
             </div>
+            <div class="chart-container">
+                <canvas id="fft-chart"></canvas>
+            </div>
             <div class="prediction">
                 Movement Prediction: <span id="movement-prediction">--</span>
                 <span class="confidence">(confidence: <span id="movement-confidence">--</span>%)</span>
             </div>
+            <div id="movement-features"></div>
         </div>
         
-        <h2>Tracking History</h2>
-        <div id="previous-visits"></div>
+        <div class="section" id="camera-section">
+            <h3>Camera Integration</h3>
+            <div id="camera-consent" class="camera-container">
+                <p>Would you like to enable camera analysis for enhanced posture detection?</p>
+                <button id="enable-camera-btn" class="btn btn-accept">Enable Camera</button>
+                <button id="disable-camera-btn" class="btn btn-reject">No Thanks</button>
+            </div>
+            <div id="camera-active" class="hidden camera-container">
+                <video id="camera-feed" autoplay playsinline></video>
+                <button id="capture-btn" class="btn">Capture Image</button>
+                <canvas id="canvas" class="hidden"></canvas>
+                <img id="captured-image" alt="Captured image">
+                <div id="image-analysis"></div>
+            </div>
+        </div>
         
-        <button id="clear-btn" class="btn">Clear All Tracking Data</button>
+        <div class="section">
+            <h2>Tracking History</h2>
+            <div id="previous-visits"></div>
+            <button id="clear-btn" class="btn">Clear All Tracking Data</button>
+            <button id="export-btn" class="btn">Export Data as JSON</button>
+        </div>
     </div>
     
     <script>
@@ -179,9 +270,16 @@
         const acceptBtn = document.getElementById('accept-btn');
         const rejectBtn = document.getElementById('reject-btn');
         const clearBtn = document.getElementById('clear-btn');
+        const exportBtn = document.getElementById('export-btn');
+        const enableCameraBtn = document.getElementById('enable-camera-btn');
+        const disableCameraBtn = document.getElementById('disable-camera-btn');
+        const captureBtn = document.getElementById('capture-btn');
+        const cameraFeed = document.getElementById('camera-feed');
+        const canvas = document.getElementById('canvas');
+        const capturedImage = document.getElementById('captured-image');
         
         // State variables
-        let orientationChart, motionChart;
+        let orientationChart, motionChart, fftChart;
         let motionData = {
             timestamps: [],
             accelerationX: [],
@@ -199,6 +297,10 @@
             gamma: []
         };
         
+        let trackingStartTime = new Date();
+        let cameraStream = null;
+        let isCameraEnabled = false;
+        
         // Check existing consent
         const hasConsent = getCookie('tracking_consent') === 'true';
         
@@ -213,6 +315,8 @@
             setCookie('tracking_consent', 'true', 365);
             consentBanner.style.display = 'none';
             content.classList.remove('hidden');
+            trackingStartTime = new Date();
+            document.getElementById('tracking-start-time').textContent = trackingStartTime.toLocaleString();
             initializeTracking();
         });
         
@@ -223,16 +327,28 @@
         });
         
         clearBtn.addEventListener('click', () => {
-            clearTrackingData();
-            location.reload();
+            if (confirm('Are you sure you want to clear all tracking data?')) {
+                clearTrackingData();
+                location.reload();
+            }
         });
+        
+        exportBtn.addEventListener('click', exportData);
+        
+        enableCameraBtn.addEventListener('click', enableCamera);
+        disableCameraBtn.addEventListener('click', () => {
+            document.getElementById('camera-consent').classList.add('hidden');
+            document.getElementById('camera-status').textContent = 'User declined';
+        });
+        
+        captureBtn.addEventListener('click', captureImage);
         
         // Cookie functions
         function setCookie(name, value, days) {
             const date = new Date();
             date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
             const expires = "expires=" + date.toUTCString();
-            document.cookie = name + "=" + value + ";" + expires + ";path=/;SameSite=Lax";
+            document.cookie = name + "=" + value + ";" + expires + ";path=/;SameSite=Lax;Secure";
         }
         
         function getCookie(name) {
@@ -260,6 +376,12 @@
             deleteCookie('tracking_consent');
             deleteCookie('visits_data');
             deleteCookie('current_visit');
+            deleteCookie('camera_consent');
+            
+            // Stop camera stream if active
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+            }
         }
         
         // Initialization function
@@ -280,16 +402,22 @@
                 rawMotion: [],
                 posture: {
                     prediction: 'Unknown',
-                    confidence: 0
+                    confidence: 0,
+                    features: {}
                 },
                 movement: {
                     prediction: 'Unknown',
-                    confidence: 0
+                    confidence: 0,
+                    features: {}
+                },
+                camera: {
+                    enabled: false,
+                    images: []
                 }
             };
             
             // Display basic info
-            document.getElementById('current-timestamp').textContent = timestamp;
+            document.getElementById('tracking-start-time').textContent = trackingStartTime.toLocaleString();
             document.getElementById('current-device').textContent = deviceInfo.deviceType;
             document.getElementById('current-browser').textContent = deviceInfo.browser;
             document.getElementById('current-resolution').textContent = deviceInfo.screenResolution;
@@ -332,7 +460,11 @@
                 // Device orientation tracking
                 if (window.DeviceOrientationEvent) {
                     window.addEventListener('deviceorientation', handleOrientation);
+                    document.getElementById('orientation-status').innerHTML = 
+                        '<span class="status-indicator status-active"></span> Active';
                 } else {
+                    document.getElementById('orientation-status').innerHTML = 
+                        '<span class="status-indicator status-inactive"></span> Not supported';
                     document.getElementById('orientation-section').innerHTML += 
                         '<p>Device orientation API not supported on this device.</p>';
                 }
@@ -340,15 +472,28 @@
                 // Device motion tracking
                 if (window.DeviceMotionEvent) {
                     window.addEventListener('devicemotion', handleMotion);
+                    document.getElementById('motion-status').innerHTML = 
+                        '<span class="status-indicator status-active"></span> Active';
                 } else {
+                    document.getElementById('motion-status').innerHTML = 
+                        '<span class="status-indicator status-inactive"></span> Not supported';
                     document.getElementById('motion-section').innerHTML += 
                         '<p>Device motion API not supported on this device.</p>';
                 }
             } else {
+                document.getElementById('orientation-status').innerHTML = 
+                    '<span class="status-indicator status-inactive"></span> Requires mobile';
+                document.getElementById('motion-status').innerHTML = 
+                    '<span class="status-indicator status-inactive"></span> Requires mobile';
                 document.getElementById('orientation-section').innerHTML += 
                     '<p>Orientation tracking requires a mobile device.</p>';
                 document.getElementById('motion-section').innerHTML += 
                     '<p>Motion tracking requires a mobile device.</p>';
+            }
+            
+            // Check camera consent
+            if (getCookie('camera_consent') === 'true') {
+                enableCamera();
             }
             
             // Store initial visit data
@@ -368,22 +513,22 @@
                     labels: [],
                     datasets: [
                         {
-                            label: 'Alpha (compass)',
-                            data: [],
-                            borderColor: 'rgb(255, 99, 132)',
-                            tension: 0.1
-                        },
-                        {
                             label: 'Beta (front-back)',
                             data: [],
                             borderColor: 'rgb(54, 162, 235)',
-                            tension: 0.1
+                            backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                            borderWidth: 2,
+                            tension: 0.1,
+                            fill: true
                         },
                         {
                             label: 'Gamma (left-right)',
                             data: [],
                             borderColor: 'rgb(75, 192, 192)',
-                            tension: 0.1
+                            backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                            borderWidth: 2,
+                            tension: 0.1,
+                            fill: true
                         }
                     ]
                 },
@@ -393,7 +538,26 @@
                     scales: {
                         y: {
                             min: -180,
-                            max: 180
+                            max: 180,
+                            title: {
+                                display: true,
+                                text: 'Degrees'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Time'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
                         }
                     }
                 }
@@ -407,28 +571,97 @@
                     labels: [],
                     datasets: [
                         {
-                            label: 'Accel X',
+                            label: 'Acceleration X',
                             data: [],
                             borderColor: 'rgb(255, 99, 132)',
-                            tension: 0.1
+                            backgroundColor: 'rgba(255, 99, 132, 0.1)',
+                            borderWidth: 1,
+                            tension: 0.1,
+                            fill: true
                         },
                         {
-                            label: 'Accel Y',
+                            label: 'Acceleration Y',
                             data: [],
                             borderColor: 'rgb(54, 162, 235)',
-                            tension: 0.1
+                            backgroundColor: 'rgba(54, 162, 235, 0.1)',
+                            borderWidth: 1,
+                            tension: 0.1,
+                            fill: true
                         },
                         {
-                            label: 'Accel Z',
+                            label: 'Acceleration Z',
                             data: [],
                             borderColor: 'rgb(75, 192, 192)',
-                            tension: 0.1
+                            backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                            borderWidth: 1,
+                            tension: 0.1,
+                            fill: true
                         }
                     ]
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: false
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Acceleration (m/s²)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Time'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                        }
+                    }
+                }
+            });
+            
+            // FFT chart
+            const fftCtx = document.getElementById('fft-chart').getContext('2d');
+            fftChart = new Chart(fftCtx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: 'Frequency Spectrum',
+                            data: [],
+                            backgroundColor: 'rgba(153, 102, 255, 0.7)',
+                            borderColor: 'rgba(153, 102, 255, 1)',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Magnitude'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Frequency (Hz)'
+                            }
+                        }
+                    }
                 }
             });
         }
@@ -436,9 +669,9 @@
         // Sensor handlers
         function handleOrientation(event) {
             const timestamp = new Date().toISOString();
-            const alpha = Math.round(event.alpha);
-            const beta = Math.round(event.beta);
-            const gamma = Math.round(event.gamma);
+            const alpha = Math.round(event.alpha * 10) / 10;
+            const beta = Math.round(event.beta * 10) / 10;
+            const gamma = Math.round(event.gamma * 10) / 10;
             
             // Update display
             document.getElementById('alpha-value').textContent = alpha;
@@ -446,14 +679,14 @@
             document.getElementById('gamma-value').textContent = gamma;
             document.getElementById('absolute-value').textContent = event.absolute ? 'true' : 'false';
             
-            // Update chart
+            // Update orientation data
             orientationData.timestamps.push(timestamp);
             orientationData.alpha.push(alpha);
             orientationData.beta.push(beta);
             orientationData.gamma.push(gamma);
             
             // Keep data size manageable
-            if (orientationData.timestamps.length > 50) {
+            if (orientationData.timestamps.length > 100) {
                 orientationData.timestamps.shift();
                 orientationData.alpha.shift();
                 orientationData.beta.shift();
@@ -463,9 +696,12 @@
             updateOrientationChart();
             
             // Make posture prediction
-            const posturePrediction = predictPosture(beta, gamma);
+            const posturePrediction = predictPosture(orientationData);
             document.getElementById('posture-prediction').textContent = posturePrediction.prediction;
             document.getElementById('posture-confidence').textContent = posturePrediction.confidence;
+            
+            // Display features
+            displayPostureFeatures(posturePrediction.features);
             
             // Update current visit data
             updateCurrentVisitData({
@@ -503,7 +739,7 @@
             }
             
             // Keep data size manageable
-            if (motionData.timestamps.length > 50) {
+            if (motionData.timestamps.length > 100) {
                 motionData.timestamps.shift();
                 motionData.accelerationX.shift();
                 motionData.accelerationY.shift();
@@ -516,17 +752,13 @@
             updateMotionChart();
             
             // Make movement prediction
-            const movementPrediction = predictMovement(
-                motionData.accelerationX, 
-                motionData.accelerationY, 
-                motionData.accelerationZ,
-                motionData.rotationAlpha,
-                motionData.rotationBeta,
-                motionData.rotationGamma
-            );
+            const movementPrediction = predictMovement(motionData);
             
             document.getElementById('movement-prediction').textContent = movementPrediction.prediction;
             document.getElementById('movement-confidence').textContent = movementPrediction.confidence;
+            
+            // Display features
+            displayMovementFeatures(movementPrediction.features);
             
             // Update current visit data
             updateCurrentVisitData({
@@ -549,31 +781,52 @@
             });
         }
         
-        // Prediction algorithms
-        function predictPosture(beta, gamma) {
-            // Advanced posture detection using machine learning-inspired approach
-            const absBeta = Math.abs(beta);
-            const absGamma = Math.abs(gamma);
+        // Improved Prediction Algorithms
+        function predictPosture(orientationData) {
+            if (orientationData.beta.length < 5) {
+                return {
+                    prediction: "Calibrating...",
+                    confidence: 0,
+                    features: {}
+                };
+            }
             
-            // Calculate feature scores
+            // Calculate features over a window of recent readings
+            const windowSize = Math.min(20, orientationData.beta.length);
+            const recentBeta = orientationData.beta.slice(-windowSize);
+            const recentGamma = orientationData.gamma.slice(-windowSize);
+            
+            // Feature calculations
+            const betaMean = math.mean(recentBeta);
+            const betaStd = math.std(recentBeta);
+            const gammaMean = math.mean(recentGamma);
+            const gammaStd = math.std(recentGamma);
+            const betaRange = math.max(recentBeta) - math.min(recentBeta);
+            const gammaRange = math.max(recentGamma) - math.min(recentGamma);
+            
+            // Calculate posture scores
             const layingScore = Math.max(
-                1 - Math.min(absBeta - 80, 100) / 20,
-                1 - Math.min(absBeta + 80, 100) / 20
+                0.8 - Math.min(Math.abs(Math.abs(betaMean) - 90), 30) / 30,
+                0.8 - gammaStd / 45
             );
             
-            const standingScore = 1 - Math.min(absBeta, 30) / 30;
-            const sittingScore = 1 - Math.min(Math.abs(absBeta - 90), 30) / 30;
+            const standingScore = (0.9 - Math.min(Math.abs(betaMean), 30) / 30) * 
+                                (0.7 + Math.min(gammaStd, 30) / 30);
             
-            // Consider gamma for sideways detection
-            const sidewaysScore = Math.min(absGamma, 90) / 90;
+            const sittingScore = (0.8 - Math.min(Math.abs(Math.abs(betaMean) - 90), 30) / 30) * 
+                               (0.7 + Math.min(gammaStd, 30) / 30);
+            
+            const sidewaysScore = Math.min(Math.abs(gammaMean), 90) / 90 * 
+                                (0.5 + gammaStd / 90);
             
             // Determine the highest scoring posture
             const scores = {
-                'Laying down (screen up)': Math.max(0, layingScore * (1 - sidewaysScore)),
-                'Laying down (screen down)': Math.max(0, layingScore * (1 - sidewaysScore)),
-                'Standing upright': standingScore * (1 - sidewaysScore),
-                'Sitting upright': sittingScore * (1 - sidewaysScore),
-                'Holding sideways': sidewaysScore
+                'Laying down (screen up)': Math.max(0, layingScore * (1 - sidewaysScore / 2)),
+                'Laying down (screen down)': Math.max(0, layingScore * (1 - sidewaysScore / 2)),
+                'Standing upright': standingScore * (1 - sidewaysScore / 2),
+                'Sitting upright': sittingScore * (1 - sidewaysScore / 2),
+                'Holding sideways': sidewaysScore,
+                'In between positions': 0.3 * (1 - Math.max(layingScore, standingScore, sittingScore, sidewaysScore))
             };
             
             // Find the prediction with highest score
@@ -589,104 +842,207 @@
             
             // Special case for face down/up when laying
             if (prediction.includes('Laying down')) {
-                if (beta > 0) {
+                if (betaMean > 0) {
                     prediction = 'Laying down (screen up)';
                 } else {
                     prediction = 'Laying down (screen down)';
                 }
             }
             
+            // Calculate confidence (adjust based on stability of readings)
+            const stabilityFactor = 1 - (betaStd + gammaStd) / 90;
+            const confidence = Math.min(100, Math.round(maxScore * 100 * Math.max(0.5, stabilityFactor)));
+            
             return {
                 prediction,
-                confidence: Math.round(maxScore * 100)
+                confidence,
+                features: {
+                    betaMean,
+                    betaStd,
+                    gammaMean,
+                    gammaStd,
+                    betaRange,
+                    gammaRange,
+                    scores
+                }
             };
         }
         
-        function predictMovement(accelX, accelY, accelZ, rotAlpha, rotBeta, rotGamma) {
-            if (accelX.length < 10) {
-                return { prediction: 'Analyzing...', confidence: 0 };
+        function predictMovement(motionData) {
+            if (motionData.accelerationX.length < 20) {
+                return {
+                    prediction: "Calibrating...",
+                    confidence: 0,
+                    features: {}
+                };
+            }
+            
+            // Calculate magnitude of acceleration
+            const magnitudes = [];
+            for (let i = 0; i < motionData.accelerationX.length; i++) {
+                magnitudes.push(Math.sqrt(
+                    Math.pow(motionData.accelerationX[i], 2) + 
+                    Math.pow(motionData.accelerationY[i], 2) + 
+                    Math.pow(motionData.accelerationZ[i], 2)
+                ));
             }
             
             // Calculate statistical features
             const calcFeatures = (arr) => {
-                const mean = arr.reduce((a, b) => a + b, 0) / arr.length;
-                const variance = arr.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / arr.length;
-                const stdDev = Math.sqrt(variance);
-                const range = Math.max(...arr) - Math.min(...arr);
-                return { mean, stdDev, range };
+                const mean = math.mean(arr);
+                const variance = math.variance(arr);
+                const stdDev = math.std(arr);
+                const range = math.max(arr) - math.min(arr);
+                const rms = math.sqrt(math.mean(arr.map(x => x * x)));
+                
+                // Calculate FFT
+                const fft = calculateFFT(arr);
+                const dominantFreq = findDominantFrequency(fft);
+                
+                return { mean, variance, stdDev, range, rms, fft, dominantFreq };
             };
             
-            // Calculate magnitude of acceleration
-            const magnitudes = [];
-            for (let i = 0; i < accelX.length; i++) {
-                magnitudes.push(Math.sqrt(
-                    Math.pow(accelX[i], 2) + 
-                    Math.pow(accelY[i], 2) + 
-                    Math.pow(accelZ[i], 2)
-                ));
-            }
-            
             const magFeatures = calcFeatures(magnitudes);
-            const xFeatures = calcFeatures(accelX);
-            const yFeatures = calcFeatures(accelY);
-            const zFeatures = calcFeatures(accelZ);
+            const xFeatures = calcFeatures(motionData.accelerationX);
+            const yFeatures = calcFeatures(motionData.accelerationY);
+            const zFeatures = calcFeatures(motionData.accelerationZ);
             
             // Calculate rotation features if available
             let rotFeatures = { mean: 0, stdDev: 0, range: 0 };
-            if (rotAlpha && rotAlpha.length > 0) {
+            if (motionData.rotationAlpha.length > 0) {
                 const rotMagnitudes = [];
-                for (let i = 0; i < rotAlpha.length; i++) {
+                for (let i = 0; i < motionData.rotationAlpha.length; i++) {
                     rotMagnitudes.push(Math.sqrt(
-                        Math.pow(rotAlpha[i], 2) + 
-                        Math.pow(rotBeta[i], 2) + 
-                        Math.pow(rotGamma[i], 2)
+                        Math.pow(motionData.rotationAlpha[i], 2) + 
+                        Math.pow(motionData.rotationBeta[i], 2) + 
+                        Math.pow(motionData.rotationGamma[i], 2)
                     ));
                 }
                 rotFeatures = calcFeatures(rotMagnitudes);
             }
             
-            // Movement detection rules (these thresholds can be adjusted)
+            // Update FFT chart
+            updateFFTChart(magFeatures.fft);
+            
+            // Movement classification using a decision tree approach with multiple features
             let prediction = 'Unknown';
             let confidence = 0;
             
-            // Stationary detection
-            if (magFeatures.stdDev < 0.3 && magFeatures.range < 1.0 && rotFeatures.range < 10) {
+            // 1. Check for stationary
+            if (magFeatures.stdDev < 0.3 && magFeatures.range < 1.0 && 
+                rotFeatures.range < 15 && magFeatures.dominantFreq.magnitude < 0.5) {
                 prediction = 'Stationary';
                 confidence = 100 - Math.min(100, magFeatures.stdDev * 200);
             } 
-            // Walking detection
-            else if (magFeatures.stdDev > 0.5 && magFeatures.stdDev < 2.5 && 
-                     magFeatures.range > 1.0 && magFeatures.range < 5.0 &&
-                     rotFeatures.range < 30) {
+            // 2. Check for walking
+            else if (magFeatures.dominantFreq.frequency > 0.5 && magFeatures.dominantFreq.frequency < 3.0 &&
+                     magFeatures.dominantFreq.magnitude > 0.7 && magFeatures.range > 0.5 && 
+                     magFeatures.range < 5.0 && rotFeatures.range < 30) {
                 prediction = 'Walking';
-                confidence = Math.min(100, 30 + magFeatures.stdDev * 30);
+                confidence = Math.min(100, 30 + magFeatures.dominantFreq.magnitude * 70);
+                
+                // Refine based on step frequency
+                if (magFeatures.dominantFreq.frequency > 1.5 && magFeatures.dominantFreq.frequency < 2.5) {
+                    confidence = Math.min(100, confidence + 10);
+                    prediction = 'Walking briskly';
+                }
             }
-            // Driving detection
-            else if (magFeatures.stdDev > 0.3 && magFeatures.range > 1.5 && 
-                     (rotFeatures.range > 15 || zFeatures.range > 2.0)) {
+            // 3. Check for running
+            else if (magFeatures.dominantFreq.frequency > 2.5 && magFeatures.dominantFreq.frequency < 5.0 &&
+                     magFeatures.dominantFreq.magnitude > 1.5 && magFeatures.range > 3.0) {
+                prediction = 'Running';
+                confidence = Math.min(100, 50 + magFeatures.dominantFreq.magnitude * 30);
+            }
+            // 4. Check for driving
+            else if ((rotFeatures.range > 15 || zFeatures.range > 2.0) && 
+                     magFeatures.dominantFreq.frequency < 1.0) {
                 prediction = 'Driving or in vehicle';
-                confidence = Math.min(100, 40 + Math.min(rotFeatures.range, 60));
+                confidence = Math.min(100, 40 + Math.min(rotFeatures.range / 2, 60));
+            }
+            // 5. Check for cycling
+            else if (magFeatures.dominantFreq.frequency > 0.8 && magFeatures.dominantFreq.frequency < 2.0 &&
+                     magFeatures.dominantFreq.magnitude > 0.5 && rotFeatures.range > 10) {
+                prediction = 'Cycling';
+                confidence = Math.min(100, 30 + magFeatures.dominantFreq.magnitude * 50);
             }
             // Fallback predictions
             else if (magFeatures.stdDev > 2.5) {
-                prediction = 'High activity (running?)';
+                prediction = 'High activity';
                 confidence = 70;
             }
-            else {
+            else if (magFeatures.stdDev > 0.5) {
                 prediction = 'Moving';
                 confidence = 50;
             }
+            else {
+                prediction = 'Low activity';
+                confidence = 30;
+            }
             
-            return { prediction, confidence: Math.round(confidence) };
+            return {
+                prediction,
+                confidence: Math.round(confidence),
+                features: {
+                    magnitude: magFeatures,
+                    accelerationX: xFeatures,
+                    accelerationY: yFeatures,
+                    accelerationZ: zFeatures,
+                    rotation: rotFeatures,
+                    dominantFrequency: magFeatures.dominantFreq.frequency,
+                    frequencyMagnitude: magFeatures.dominantFreq.magnitude
+                }
+            };
+        }
+        
+        // FFT calculations
+        function calculateFFT(data) {
+            const N = data.length;
+            const fft = [];
+            
+            // Simple DFT implementation (for demonstration)
+            for (let k = 0; k < N/2; k++) {
+                let real = 0;
+                let imag = 0;
+                
+                for (let n = 0; n < N; n++) {
+                    const angle = -2 * Math.PI * k * n / N;
+                    real += data[n] * Math.cos(angle);
+                    imag += data[n] * Math.sin(angle);
+                }
+                
+                fft.push({
+                    frequency: k / N * 10, // Assuming 10Hz sample rate
+                    magnitude: Math.sqrt(real*real + imag*imag) / N
+                });
+            }
+            
+            return fft;
+        }
+        
+        function findDominantFrequency(fft) {
+            let maxMagnitude = 0;
+            let dominantFreq = 0;
+            
+            // Skip DC component (index 0)
+            for (let i = 1; i < fft.length; i++) {
+                if (fft[i].magnitude > maxMagnitude) {
+                    maxMagnitude = fft[i].magnitude;
+                    dominantFreq = fft[i].frequency;
+                }
+            }
+            
+            return {
+                frequency: dominantFreq,
+                magnitude: maxMagnitude
+            };
         }
         
         // Chart update functions
         function updateOrientationChart() {
             orientationChart.data.labels = orientationData.timestamps.map(ts => 
                 new Date(ts).toLocaleTimeString());
-            orientationChart.data.datasets[0].data = orientationData.alpha;
-            orientationChart.data.datasets[1].data = orientationData.beta;
-            orientationChart.data.datasets[2].data = orientationData.gamma;
+            orientationChart.data.datasets[0].data = orientationData.beta;
+            orientationChart.data.datasets[1].data = orientationData.gamma;
             orientationChart.update();
         }
         
@@ -699,11 +1055,182 @@
             motionChart.update();
         }
         
+        function updateFFTChart(fft) {
+            const labels = fft.map(bin => bin.frequency.toFixed(2));
+            const data = fft.map(bin => bin.magnitude);
+            
+            fftChart.data.labels = labels;
+            fftChart.data.datasets[0].data = data;
+            fftChart.update();
+        }
+        
+        // Feature display functions
+        function displayPostureFeatures(features) {
+            let html = '<strong>Posture Features:</strong><ul>';
+            
+            if (features.scores) {
+                html += '<li>Scores:';
+                html += '<ul>';
+                for (const [posture, score] of Object.entries(features.scores)) {
+                    html += `<li>${posture}: ${score.toFixed(2)}</li>`;
+                }
+                html += '</ul></li>';
+            }
+            
+            html += `<li>Beta Mean: ${features.betaMean?.toFixed(2) || '--'}°</li>`;
+            html += `<li>Beta Std Dev: ${features.betaStd?.toFixed(2) || '--'}°</li>`;
+            html += `<li>Gamma Mean: ${features.gammaMean?.toFixed(2) || '--'}°</li>`;
+            html += `<li>Gamma Std Dev: ${features.gammaStd?.toFixed(2) || '--'}°</li>`;
+            html += '</ul>';
+            
+            document.getElementById('posture-features').innerHTML = html;
+        }
+        
+        function displayMovementFeatures(features) {
+            let html = '<strong>Movement Features:</strong><ul>';
+            
+            html += `<li>Acceleration Magnitude: Mean ${features.magnitude?.mean?.toFixed(2) || '--'} m/s²</li>`;
+            html += `<li>Acceleration Std Dev: ${features.magnitude?.stdDev?.toFixed(2) || '--'} m/s²</li>`;
+            html += `<li>Dominant Frequency: ${features.dominantFrequency?.toFixed(2) || '--'} Hz</li>`;
+            html += `<li>Frequency Magnitude: ${features.frequencyMagnitude?.toFixed(2) || '--'}</li>`;
+            html += `<li>Rotation Range: ${features.rotation?.range?.toFixed(2) || '--'} °/s</li>`;
+            html += '</ul>';
+            
+            document.getElementById('movement-features').innerHTML = html;
+        }
+        
+        // Camera functions
+        async function enableCamera() {
+            try {
+                cameraStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: 'user',
+                        width: { ideal: 640 },
+                        height: { ideal: 480 }
+                    },
+                    audio: false
+                });
+                
+                cameraFeed.srcObject = cameraStream;
+                document.getElementById('camera-consent').classList.add('hidden');
+                document.getElementById('camera-active').classList.remove('hidden');
+                document.getElementById('camera-status').innerHTML = 
+                    '<span class="status-indicator status-active"></span> Active';
+                
+                setCookie('camera_consent', 'true', 365);
+                isCameraEnabled = true;
+                
+                // Update current visit data
+                updateCurrentVisitData({
+                    camera: {
+                        enabled: true,
+                        images: []
+                    }
+                });
+            } catch (error) {
+                console.error('Camera error:', error);
+                document.getElementById('camera-status').innerHTML = 
+                    '<span class="status-indicator status-inactive"></span> Error: ' + error.message;
+            }
+        }
+        
+        function captureImage() {
+            if (!cameraStream) return;
+            
+            // Set canvas size to match video
+            canvas.width = cameraFeed.videoWidth;
+            canvas.height = cameraFeed.videoHeight;
+            
+            // Draw current video frame to canvas
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(cameraFeed, 0, 0, canvas.width, canvas.height);
+            
+            // Convert to data URL and display
+            const imageDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+            capturedImage.src = imageDataUrl;
+            capturedImage.style.display = 'block';
+            
+            // Update last capture time
+            const now = new Date();
+            document.getElementById('last-capture').textContent = now.toLocaleTimeString();
+            
+            // Simple image analysis (for demonstration)
+            analyzeImage(canvas);
+            
+            // Store image in visit data
+            updateCurrentVisitData({
+                camera: {
+                    images: [{
+                        timestamp: now.toISOString(),
+                        imageData: imageDataUrl,
+                        analysis: {} // Would contain analysis results in a real app
+                    }]
+                }
+            });
+        }
+        
+        function analyzeImage(canvas) {
+            const ctx = canvas.getContext('2d');
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+            
+            // Simple brightness analysis
+            let brightness = 0;
+            for (let i = 0; i < data.length; i += 4) {
+                brightness += (data[i] + data[i+1] + data[i+2]) / 3;
+            }
+            brightness = brightness / (data.length / 4);
+            
+            // Simple edge detection (very basic)
+            let edgeScore = 0;
+            const edgeThreshold = 30;
+            for (let y = 1; y < canvas.height; y++) {
+                for (let x = 1; x < canvas.width; x++) {
+                    const idx = (y * canvas.width + x) * 4;
+                    const prevIdx = ((y-1) * canvas.width + (x-1)) * 4;
+                    
+                    const diffR = Math.abs(data[idx] - data[prevIdx]);
+                    const diffG = Math.abs(data[idx+1] - data[prevIdx+1]);
+                    const diffB = Math.abs(data[idx+2] - data[prevIdx+2]);
+                    
+                    if ((diffR + diffG + diffB) / 3 > edgeThreshold) {
+                        edgeScore++;
+                    }
+                }
+            }
+            edgeScore = edgeScore / (canvas.width * canvas.height) * 100;
+            
+            // Display analysis results
+            document.getElementById('image-analysis').innerHTML = `
+                <strong>Image Analysis:</strong>
+                <ul>
+                    <li>Average Brightness: ${Math.round(brightness)}/255</li>
+                    <li>Edge Score: ${edgeScore.toFixed(1)}%</li>
+                </ul>
+            `;
+        }
+        
         // Data management
         function updateCurrentVisitData(updates) {
             const currentVisit = JSON.parse(getCookie('current_visit') || '{}');
-            const updatedVisit = { ...currentVisit, ...updates };
+            
+            // Deep merge for nested objects
+            const updatedVisit = deepMerge(currentVisit, updates);
             setCookie('current_visit', JSON.stringify(updatedVisit), 1);
+        }
+        
+        function deepMerge(target, source) {
+            const result = { ...target };
+            
+            for (const key in source) {
+                if (source[key] instanceof Object && key in target) {
+                    result[key] = deepMerge(target[key], source[key]);
+                } else {
+                    result[key] = source[key];
+                }
+            }
+            
+            return result;
         }
         
         function loadPreviousVisits(currentVisit) {
@@ -711,7 +1238,11 @@
             const visitsCookie = getCookie('visits_data');
             
             if (visitsCookie) {
-                visits = JSON.parse(visitsCookie);
+                try {
+                    visits = JSON.parse(visitsCookie);
+                } catch (e) {
+                    console.error('Error parsing visits data:', e);
+                }
             }
             
             // Add current visit to history (without raw data to save space)
@@ -723,10 +1254,17 @@
                 ipAddress: currentVisit.ipAddress,
                 location: currentVisit.location,
                 posture: currentVisit.posture,
-                movement: currentVisit.movement
+                movement: currentVisit.movement,
+                camera: currentVisit.camera
             };
             
             visits.push(visitToStore);
+            
+            // Limit history size
+            if (visits.length > 20) {
+                visits = visits.slice(-20);
+            }
+            
             setCookie('visits_data', JSON.stringify(visits), 365);
             
             // Display previous visits
@@ -749,13 +1287,18 @@
             
             sortedVisits.forEach((visit, index) => {
                 const visitElement = document.createElement('div');
-                visitElement.className = 'visit-data';
+                visitElement.className = 'section';
                 
                 let locationText = 'Unknown';
                 if (typeof visit.location === 'object') {
                     locationText = `${visit.location.latitude}, ${visit.location.longitude} (±${visit.location.accuracy})`;
                 } else if (visit.location) {
                     locationText = visit.location;
+                }
+                
+                let cameraInfo = 'Not used';
+                if (visit.camera?.enabled) {
+                    cameraInfo = `Enabled (${visit.camera.images?.length || 0} images)`;
                 }
                 
                 visitElement.innerHTML = `
@@ -767,7 +1310,7 @@
                         </tr>
                         <tr>
                             <td>Device Type</td>
-                            <td>${visit.deviceType}</td>
+                            <td>${visit.deviceType || 'Unknown'}</td>
                         </tr>
                         <tr>
                             <td>Location</td>
@@ -786,17 +1329,43 @@
                             </td>
                         </tr>
                         <tr>
-                            <td>IP Address</td>
-                            <td>${visit.ipAddress || 'Unknown'}</td>
-                        </tr>
-                        <tr>
-                            <td>Browser</td>
-                            <td>${visit.browser || 'Unknown'}</td>
+                            <td>Camera</td>
+                            <td>${cameraInfo}</td>
                         </tr>
                     </table>
                 `;
                 container.appendChild(visitElement);
             });
+        }
+        
+        function exportData() {
+            const visitsCookie = getCookie('visits_data');
+            let visits = [];
+            
+            if (visitsCookie) {
+                try {
+                    visits = JSON.parse(visitsCookie);
+                } catch (e) {
+                    console.error('Error parsing visits data:', e);
+                }
+            }
+            
+            // Create a blob with the data
+            const blob = new Blob([JSON.stringify(visits, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            // Create a download link
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'tracking-data-export.json';
+            document.body.appendChild(a);
+            a.click();
+            
+            // Clean up
+            setTimeout(() => {
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }, 100);
         }
         
         // Device info detection
