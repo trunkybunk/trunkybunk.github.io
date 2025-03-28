@@ -3,17 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tracking Cookies Demonstration</title>
+    <title>Advanced Tracking Demonstration</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             line-height: 1.6;
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
             padding: 20px;
             color: #333;
         }
-        h1, h2 {
+        h1, h2, h3 {
             color: #2c3e50;
         }
         .consent-banner {
@@ -40,9 +40,10 @@
         }
         .visit-data {
             background-color: #f0f8ff;
-            padding: 10px;
-            margin: 10px 0;
+            padding: 15px;
+            margin: 15px 0;
             border-left: 4px solid #3498db;
+            border-radius: 4px;
         }
         .data-table {
             width: 100%;
@@ -60,22 +61,43 @@
         .hidden {
             display: none;
         }
+        .sensor-data {
+            background-color: #fffaf0;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        .prediction {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .confidence {
+            font-style: italic;
+            color: #7f8c8d;
+        }
+        .chart-container {
+            height: 200px;
+            margin: 15px 0;
+        }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <h1>Tracking Cookies Demonstration</h1>
+    <h1>Advanced Tracking Demonstration</h1>
     
     <div id="consent-banner" class="consent-banner">
-        <h2>Cookie Consent</h2>
-        <p>This website uses cookies to track your visits, location, and device information to demonstrate tracking technology. Do you consent to this tracking?</p>
-        <button id="accept-btn" class="btn btn-accept">Accept</button>
-        <button id="reject-btn" class="btn btn-reject">Reject</button>
+        <h2>Tracking Consent</h2>
+        <p>This demonstration tracks device sensors with your permission to analyze posture and movement. No data leaves your browser unless you consent.</p>
+        <button id="accept-btn" class="btn btn-accept">Accept Tracking</button>
+        <button id="reject-btn" class="btn btn-reject">Reject Tracking</button>
     </div>
     
     <div id="content" class="hidden">
-        <h2>Your Visit Information</h2>
-        <div id="current-visit" class="visit-data">
-            <h3>Current Visit</h3>
+        <h2>Current Session Analysis</h2>
+        
+        <div class="visit-data">
+            <h3>Device Information</h3>
             <table class="data-table">
                 <tr>
                     <th>Information Type</th>
@@ -90,22 +112,6 @@
                     <td id="current-device"></td>
                 </tr>
                 <tr>
-                    <td>Location</td>
-                    <td id="current-location"></td>
-                </tr>
-                <tr>
-                    <td>Posture</td>
-                    <td id="current-posture"></td>
-                </tr>
-                <tr>
-                    <td>Movement</td>
-                    <td id="current-movement"></td>
-                </tr>
-                <tr>
-                    <td>IP Address</td>
-                    <td id="current-ip"></td>
-                </tr>
-                <tr>
                     <td>Browser</td>
                     <td id="current-browser"></td>
                 </tr>
@@ -113,10 +119,54 @@
                     <td>Screen Resolution</td>
                     <td id="current-resolution"></td>
                 </tr>
+                <tr>
+                    <td>IP Address</td>
+                    <td id="current-ip"></td>
+                </tr>
+                <tr>
+                    <td>Location</td>
+                    <td id="current-location"></td>
+                </tr>
             </table>
         </div>
         
-        <h2>Previous Visits</h2>
+        <div class="visit-data" id="orientation-section">
+            <h3>Orientation Analysis</h3>
+            <div class="sensor-data">
+                <strong>Raw Orientation Data:</strong><br>
+                Alpha (compass): <span id="alpha-value">--</span>°<br>
+                Beta (front-back tilt): <span id="beta-value">--</span>°<br>
+                Gamma (left-right tilt): <span id="gamma-value">--</span>°<br>
+                Absolute: <span id="absolute-value">--</span>
+            </div>
+            <div class="chart-container">
+                <canvas id="orientation-chart"></canvas>
+            </div>
+            <div class="prediction">
+                Posture Prediction: <span id="posture-prediction">--</span>
+                <span class="confidence">(confidence: <span id="posture-confidence">--</span>%)</span>
+            </div>
+        </div>
+        
+        <div class="visit-data" id="motion-section">
+            <h3>Motion Analysis</h3>
+            <div class="sensor-data">
+                <strong>Raw Motion Data:</strong><br>
+                Acceleration (x,y,z): <span id="accel-values">--</span> m/s²<br>
+                Acceleration (incl. gravity): <span id="accel-gravity-values">--</span> m/s²<br>
+                Rotation Rate (α,β,γ): <span id="rotation-values">--</span> °/s<br>
+                Interval: <span id="interval-value">--</span> ms
+            </div>
+            <div class="chart-container">
+                <canvas id="motion-chart"></canvas>
+            </div>
+            <div class="prediction">
+                Movement Prediction: <span id="movement-prediction">--</span>
+                <span class="confidence">(confidence: <span id="movement-confidence">--</span>%)</span>
+            </div>
+        </div>
+        
+        <h2>Tracking History</h2>
         <div id="previous-visits"></div>
         
         <button id="clear-btn" class="btn">Clear All Tracking Data</button>
@@ -130,13 +180,32 @@
         const rejectBtn = document.getElementById('reject-btn');
         const clearBtn = document.getElementById('clear-btn');
         
-        // Check if consent has already been given
+        // State variables
+        let orientationChart, motionChart;
+        let motionData = {
+            timestamps: [],
+            accelerationX: [],
+            accelerationY: [],
+            accelerationZ: [],
+            rotationAlpha: [],
+            rotationBeta: [],
+            rotationGamma: []
+        };
+        
+        let orientationData = {
+            timestamps: [],
+            alpha: [],
+            beta: [],
+            gamma: []
+        };
+        
+        // Check existing consent
         const hasConsent = getCookie('tracking_consent') === 'true';
         
         if (hasConsent) {
             consentBanner.style.display = 'none';
             content.classList.remove('hidden');
-            trackVisit();
+            initializeTracking();
         }
         
         // Event listeners
@@ -144,13 +213,13 @@
             setCookie('tracking_consent', 'true', 365);
             consentBanner.style.display = 'none';
             content.classList.remove('hidden');
-            trackVisit();
+            initializeTracking();
         });
         
         rejectBtn.addEventListener('click', () => {
             setCookie('tracking_consent', 'false', 365);
             consentBanner.style.display = 'none';
-            alert('You have opted out of tracking. Some features may not work.');
+            alert('You have opted out of tracking. No data will be collected.');
         });
         
         clearBtn.addEventListener('click', () => {
@@ -163,7 +232,7 @@
             const date = new Date();
             date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
             const expires = "expires=" + date.toUTCString();
-            document.cookie = name + "=" + value + ";" + expires + ";path=/";
+            document.cookie = name + "=" + value + ";" + expires + ";path=/;SameSite=Lax";
         }
         
         function getCookie(name) {
@@ -188,23 +257,13 @@
         }
         
         function clearTrackingData() {
-            // Delete all tracking cookies
             deleteCookie('tracking_consent');
             deleteCookie('visits_data');
             deleteCookie('current_visit');
-            
-            // Clear any other tracking-related cookies
-            const cookies = document.cookie.split(';');
-            for (let i = 0; i < cookies.length; i++) {
-                const cookie = cookies[i];
-                const eqPos = cookie.indexOf('=');
-                const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
-                deleteCookie(name.trim());
-            }
         }
         
-        // Tracking functions
-        async function trackVisit() {
+        // Initialization function
+        async function initializeTracking() {
             // Get basic device info
             const deviceInfo = getDeviceInfo();
             const timestamp = new Date().toISOString();
@@ -215,22 +274,37 @@
                 deviceType: deviceInfo.deviceType,
                 browser: deviceInfo.browser,
                 screenResolution: deviceInfo.screenResolution,
-                ipAddress: 'Unknown', // Will be updated if we get it
-                location: 'Unknown', // Will be updated if we get permission
-                posture: 'Unknown', // Will be updated for mobile devices
-                movement: 'Unknown' // Will be updated for mobile devices
+                ipAddress: 'Unknown',
+                location: 'Unknown',
+                rawOrientation: [],
+                rawMotion: [],
+                posture: {
+                    prediction: 'Unknown',
+                    confidence: 0
+                },
+                movement: {
+                    prediction: 'Unknown',
+                    confidence: 0
+                }
             };
             
-            // Try to get IP address (this will be approximate)
+            // Display basic info
+            document.getElementById('current-timestamp').textContent = timestamp;
+            document.getElementById('current-device').textContent = deviceInfo.deviceType;
+            document.getElementById('current-browser').textContent = deviceInfo.browser;
+            document.getElementById('current-resolution').textContent = deviceInfo.screenResolution;
+            
+            // Try to get IP address
             try {
                 const ipResponse = await fetch('https://api.ipify.org?format=json');
                 const ipData = await ipResponse.json();
                 visitData.ipAddress = ipData.ip;
+                document.getElementById('current-ip').textContent = ipData.ip;
             } catch (error) {
-                console.log('Could not get IP address:', error);
+                console.log('IP detection failed:', error);
             }
             
-            // Try to get geolocation if permitted
+            // Try to get geolocation
             if (navigator.geolocation) {
                 try {
                     const position = await new Promise((resolve, reject) => {
@@ -238,80 +312,494 @@
                     });
                     
                     visitData.location = {
-                        latitude: position.coords.latitude,
-                        longitude: position.coords.longitude,
-                        accuracy: position.coords.accuracy + ' meters'
+                        latitude: position.coords.latitude.toFixed(4),
+                        longitude: position.coords.longitude.toFixed(4),
+                        accuracy: Math.round(position.coords.accuracy) + ' meters'
                     };
+                    
+                    document.getElementById('current-location').textContent = 
+                        `${visitData.location.latitude}, ${visitData.location.longitude} (±${visitData.location.accuracy})`;
                 } catch (error) {
                     console.log('Geolocation error:', error.message);
                 }
             }
             
+            // Initialize charts
+            initializeCharts();
+            
             // Mobile device specific tracking
             if (deviceInfo.isMobile) {
-                // Device orientation (for posture)
+                // Device orientation tracking
                 if (window.DeviceOrientationEvent) {
-                    window.addEventListener('deviceorientation', (event) => {
-                        const beta = event.beta; // -180 to 180 (front-to-back tilt)
-                        
-                        if (beta > 45 && beta < 135) {
-                            visitData.posture = 'Laying down (screen up)';
-                        } else if (beta < -45 && beta > -135) {
-                            visitData.posture = 'Laying down (screen down)';
-                        } else if (Math.abs(beta) < 45) {
-                            // Check gamma to determine if it's portrait or landscape
-                            if (Math.abs(event.gamma) < 45) {
-                                visitData.posture = 'Standing or sitting upright';
-                            } else {
-                                visitData.posture = 'Holding sideways';
-                            }
-                        }
-                    }, { once: true });
+                    window.addEventListener('deviceorientation', handleOrientation);
+                } else {
+                    document.getElementById('orientation-section').innerHTML += 
+                        '<p>Device orientation API not supported on this device.</p>';
                 }
                 
-                // Device motion (for movement)
+                // Device motion tracking
                 if (window.DeviceMotionEvent) {
-                    window.addEventListener('devicemotion', (event) => {
-                        const acceleration = event.acceleration;
-                        const accelerationIncludingGravity = event.accelerationIncludingGravity;
-                        
-                        if (acceleration && accelerationIncludingGravity) {
-                            // Calculate total acceleration (excluding gravity)
-                            const totalAcceleration = Math.sqrt(
-                                Math.pow(acceleration.x, 2) + 
-                                Math.pow(acceleration.y, 2) + 
-                                Math.pow(acceleration.z, 2)
-                            );
-                            
-                            if (totalAcceleration < 0.5) {
-                                visitData.movement = 'Stationary';
-                            } else if (totalAcceleration < 3) {
-                                visitData.movement = 'Walking';
-                            } else {
-                                visitData.movement = 'Driving or in vehicle';
-                            }
+                    window.addEventListener('devicemotion', handleMotion);
+                } else {
+                    document.getElementById('motion-section').innerHTML += 
+                        '<p>Device motion API not supported on this device.</p>';
+                }
+            } else {
+                document.getElementById('orientation-section').innerHTML += 
+                    '<p>Orientation tracking requires a mobile device.</p>';
+                document.getElementById('motion-section').innerHTML += 
+                    '<p>Motion tracking requires a mobile device.</p>';
+            }
+            
+            // Store initial visit data
+            setCookie('current_visit', JSON.stringify(visitData), 1);
+            
+            // Load previous visits
+            loadPreviousVisits(visitData);
+        }
+        
+        // Chart initialization
+        function initializeCharts() {
+            // Orientation chart
+            const orientationCtx = document.getElementById('orientation-chart').getContext('2d');
+            orientationChart = new Chart(orientationCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: 'Alpha (compass)',
+                            data: [],
+                            borderColor: 'rgb(255, 99, 132)',
+                            tension: 0.1
+                        },
+                        {
+                            label: 'Beta (front-back)',
+                            data: [],
+                            borderColor: 'rgb(54, 162, 235)',
+                            tension: 0.1
+                        },
+                        {
+                            label: 'Gamma (left-right)',
+                            data: [],
+                            borderColor: 'rgb(75, 192, 192)',
+                            tension: 0.1
                         }
-                    }, { once: true });
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            min: -180,
+                            max: 180
+                        }
+                    }
+                }
+            });
+            
+            // Motion chart
+            const motionCtx = document.getElementById('motion-chart').getContext('2d');
+            motionChart = new Chart(motionCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: 'Accel X',
+                            data: [],
+                            borderColor: 'rgb(255, 99, 132)',
+                            tension: 0.1
+                        },
+                        {
+                            label: 'Accel Y',
+                            data: [],
+                            borderColor: 'rgb(54, 162, 235)',
+                            tension: 0.1
+                        },
+                        {
+                            label: 'Accel Z',
+                            data: [],
+                            borderColor: 'rgb(75, 192, 192)',
+                            tension: 0.1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+        
+        // Sensor handlers
+        function handleOrientation(event) {
+            const timestamp = new Date().toISOString();
+            const alpha = Math.round(event.alpha);
+            const beta = Math.round(event.beta);
+            const gamma = Math.round(event.gamma);
+            
+            // Update display
+            document.getElementById('alpha-value').textContent = alpha;
+            document.getElementById('beta-value').textContent = beta;
+            document.getElementById('gamma-value').textContent = gamma;
+            document.getElementById('absolute-value').textContent = event.absolute ? 'true' : 'false';
+            
+            // Update chart
+            orientationData.timestamps.push(timestamp);
+            orientationData.alpha.push(alpha);
+            orientationData.beta.push(beta);
+            orientationData.gamma.push(gamma);
+            
+            // Keep data size manageable
+            if (orientationData.timestamps.length > 50) {
+                orientationData.timestamps.shift();
+                orientationData.alpha.shift();
+                orientationData.beta.shift();
+                orientationData.gamma.shift();
+            }
+            
+            updateOrientationChart();
+            
+            // Make posture prediction
+            const posturePrediction = predictPosture(beta, gamma);
+            document.getElementById('posture-prediction').textContent = posturePrediction.prediction;
+            document.getElementById('posture-confidence').textContent = posturePrediction.confidence;
+            
+            // Update current visit data
+            updateCurrentVisitData({
+                rawOrientation: { alpha, beta, gamma, timestamp },
+                posture: posturePrediction
+            });
+        }
+        
+        function handleMotion(event) {
+            const timestamp = new Date().toISOString();
+            const accel = event.acceleration;
+            const accelGravity = event.accelerationIncludingGravity;
+            const rotation = event.rotationRate;
+            const interval = event.interval;
+            
+            // Update display
+            document.getElementById('accel-values').textContent = 
+                `${accel.x?.toFixed(2) || '--'}, ${accel.y?.toFixed(2) || '--'}, ${accel.z?.toFixed(2) || '--'}`;
+            document.getElementById('accel-gravity-values').textContent = 
+                `${accelGravity.x?.toFixed(2) || '--'}, ${accelGravity.y?.toFixed(2) || '--'}, ${accelGravity.z?.toFixed(2) || '--'}`;
+            document.getElementById('rotation-values').textContent = 
+                `${rotation?.alpha?.toFixed(2) || '--'}, ${rotation?.beta?.toFixed(2) || '--'}, ${rotation?.gamma?.toFixed(2) || '--'}`;
+            document.getElementById('interval-value').textContent = interval;
+            
+            // Update motion data
+            motionData.timestamps.push(timestamp);
+            motionData.accelerationX.push(accel.x || 0);
+            motionData.accelerationY.push(accel.y || 0);
+            motionData.accelerationZ.push(accel.z || 0);
+            
+            if (rotation) {
+                motionData.rotationAlpha.push(rotation.alpha || 0);
+                motionData.rotationBeta.push(rotation.beta || 0);
+                motionData.rotationGamma.push(rotation.gamma || 0);
+            }
+            
+            // Keep data size manageable
+            if (motionData.timestamps.length > 50) {
+                motionData.timestamps.shift();
+                motionData.accelerationX.shift();
+                motionData.accelerationY.shift();
+                motionData.accelerationZ.shift();
+                motionData.rotationAlpha.shift();
+                motionData.rotationBeta.shift();
+                motionData.rotationGamma.shift();
+            }
+            
+            updateMotionChart();
+            
+            // Make movement prediction
+            const movementPrediction = predictMovement(
+                motionData.accelerationX, 
+                motionData.accelerationY, 
+                motionData.accelerationZ,
+                motionData.rotationAlpha,
+                motionData.rotationBeta,
+                motionData.rotationGamma
+            );
+            
+            document.getElementById('movement-prediction').textContent = movementPrediction.prediction;
+            document.getElementById('movement-confidence').textContent = movementPrediction.confidence;
+            
+            // Update current visit data
+            updateCurrentVisitData({
+                rawMotion: {
+                    acceleration: { x: accel.x, y: accel.y, z: accel.z },
+                    accelerationIncludingGravity: { 
+                        x: accelGravity.x, 
+                        y: accelGravity.y, 
+                        z: accelGravity.z 
+                    },
+                    rotationRate: {
+                        alpha: rotation?.alpha,
+                        beta: rotation?.beta,
+                        gamma: rotation?.gamma
+                    },
+                    interval,
+                    timestamp
+                },
+                movement: movementPrediction
+            });
+        }
+        
+        // Prediction algorithms
+        function predictPosture(beta, gamma) {
+            // Advanced posture detection using machine learning-inspired approach
+            const absBeta = Math.abs(beta);
+            const absGamma = Math.abs(gamma);
+            
+            // Calculate feature scores
+            const layingScore = Math.max(
+                1 - Math.min(absBeta - 80, 100) / 20,
+                1 - Math.min(absBeta + 80, 100) / 20
+            );
+            
+            const standingScore = 1 - Math.min(absBeta, 30) / 30;
+            const sittingScore = 1 - Math.min(Math.abs(absBeta - 90), 30) / 30;
+            
+            // Consider gamma for sideways detection
+            const sidewaysScore = Math.min(absGamma, 90) / 90;
+            
+            // Determine the highest scoring posture
+            const scores = {
+                'Laying down (screen up)': Math.max(0, layingScore * (1 - sidewaysScore)),
+                'Laying down (screen down)': Math.max(0, layingScore * (1 - sidewaysScore)),
+                'Standing upright': standingScore * (1 - sidewaysScore),
+                'Sitting upright': sittingScore * (1 - sidewaysScore),
+                'Holding sideways': sidewaysScore
+            };
+            
+            // Find the prediction with highest score
+            let maxScore = 0;
+            let prediction = 'Unknown';
+            
+            for (const [key, value] of Object.entries(scores)) {
+                if (value > maxScore) {
+                    maxScore = value;
+                    prediction = key;
                 }
             }
             
-            // Store current visit data in a cookie (temporarily)
-            setCookie('current_visit', JSON.stringify(visitData), 1);
+            // Special case for face down/up when laying
+            if (prediction.includes('Laying down')) {
+                if (beta > 0) {
+                    prediction = 'Laying down (screen up)';
+                } else {
+                    prediction = 'Laying down (screen down)';
+                }
+            }
             
-            // Add to visit history
+            return {
+                prediction,
+                confidence: Math.round(maxScore * 100)
+            };
+        }
+        
+        function predictMovement(accelX, accelY, accelZ, rotAlpha, rotBeta, rotGamma) {
+            if (accelX.length < 10) {
+                return { prediction: 'Analyzing...', confidence: 0 };
+            }
+            
+            // Calculate statistical features
+            const calcFeatures = (arr) => {
+                const mean = arr.reduce((a, b) => a + b, 0) / arr.length;
+                const variance = arr.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / arr.length;
+                const stdDev = Math.sqrt(variance);
+                const range = Math.max(...arr) - Math.min(...arr);
+                return { mean, stdDev, range };
+            };
+            
+            // Calculate magnitude of acceleration
+            const magnitudes = [];
+            for (let i = 0; i < accelX.length; i++) {
+                magnitudes.push(Math.sqrt(
+                    Math.pow(accelX[i], 2) + 
+                    Math.pow(accelY[i], 2) + 
+                    Math.pow(accelZ[i], 2)
+                ));
+            }
+            
+            const magFeatures = calcFeatures(magnitudes);
+            const xFeatures = calcFeatures(accelX);
+            const yFeatures = calcFeatures(accelY);
+            const zFeatures = calcFeatures(accelZ);
+            
+            // Calculate rotation features if available
+            let rotFeatures = { mean: 0, stdDev: 0, range: 0 };
+            if (rotAlpha && rotAlpha.length > 0) {
+                const rotMagnitudes = [];
+                for (let i = 0; i < rotAlpha.length; i++) {
+                    rotMagnitudes.push(Math.sqrt(
+                        Math.pow(rotAlpha[i], 2) + 
+                        Math.pow(rotBeta[i], 2) + 
+                        Math.pow(rotGamma[i], 2)
+                    ));
+                }
+                rotFeatures = calcFeatures(rotMagnitudes);
+            }
+            
+            // Movement detection rules (these thresholds can be adjusted)
+            let prediction = 'Unknown';
+            let confidence = 0;
+            
+            // Stationary detection
+            if (magFeatures.stdDev < 0.3 && magFeatures.range < 1.0 && rotFeatures.range < 10) {
+                prediction = 'Stationary';
+                confidence = 100 - Math.min(100, magFeatures.stdDev * 200);
+            } 
+            // Walking detection
+            else if (magFeatures.stdDev > 0.5 && magFeatures.stdDev < 2.5 && 
+                     magFeatures.range > 1.0 && magFeatures.range < 5.0 &&
+                     rotFeatures.range < 30) {
+                prediction = 'Walking';
+                confidence = Math.min(100, 30 + magFeatures.stdDev * 30);
+            }
+            // Driving detection
+            else if (magFeatures.stdDev > 0.3 && magFeatures.range > 1.5 && 
+                     (rotFeatures.range > 15 || zFeatures.range > 2.0)) {
+                prediction = 'Driving or in vehicle';
+                confidence = Math.min(100, 40 + Math.min(rotFeatures.range, 60));
+            }
+            // Fallback predictions
+            else if (magFeatures.stdDev > 2.5) {
+                prediction = 'High activity (running?)';
+                confidence = 70;
+            }
+            else {
+                prediction = 'Moving';
+                confidence = 50;
+            }
+            
+            return { prediction, confidence: Math.round(confidence) };
+        }
+        
+        // Chart update functions
+        function updateOrientationChart() {
+            orientationChart.data.labels = orientationData.timestamps.map(ts => 
+                new Date(ts).toLocaleTimeString());
+            orientationChart.data.datasets[0].data = orientationData.alpha;
+            orientationChart.data.datasets[1].data = orientationData.beta;
+            orientationChart.data.datasets[2].data = orientationData.gamma;
+            orientationChart.update();
+        }
+        
+        function updateMotionChart() {
+            motionChart.data.labels = motionData.timestamps.map(ts => 
+                new Date(ts).toLocaleTimeString());
+            motionChart.data.datasets[0].data = motionData.accelerationX;
+            motionChart.data.datasets[1].data = motionData.accelerationY;
+            motionChart.data.datasets[2].data = motionData.accelerationZ;
+            motionChart.update();
+        }
+        
+        // Data management
+        function updateCurrentVisitData(updates) {
+            const currentVisit = JSON.parse(getCookie('current_visit') || '{}');
+            const updatedVisit = { ...currentVisit, ...updates };
+            setCookie('current_visit', JSON.stringify(updatedVisit), 1);
+        }
+        
+        function loadPreviousVisits(currentVisit) {
             let visits = [];
             const visitsCookie = getCookie('visits_data');
+            
             if (visitsCookie) {
                 visits = JSON.parse(visitsCookie);
             }
             
-            visits.push(visitData);
+            // Add current visit to history (without raw data to save space)
+            const visitToStore = {
+                timestamp: currentVisit.timestamp,
+                deviceType: currentVisit.deviceType,
+                browser: currentVisit.browser,
+                screenResolution: currentVisit.screenResolution,
+                ipAddress: currentVisit.ipAddress,
+                location: currentVisit.location,
+                posture: currentVisit.posture,
+                movement: currentVisit.movement
+            };
+            
+            visits.push(visitToStore);
             setCookie('visits_data', JSON.stringify(visits), 365);
             
-            // Update the display
-            updateDisplay(visitData, visits);
+            // Display previous visits
+            displayPreviousVisits(visits);
         }
         
+        function displayPreviousVisits(visits) {
+            const container = document.getElementById('previous-visits');
+            container.innerHTML = '';
+            
+            if (visits.length <= 1) {
+                container.innerHTML = '<p>No previous visits recorded.</p>';
+                return;
+            }
+            
+            // Sort visits by timestamp (newest first)
+            const sortedVisits = [...visits]
+                .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+                .slice(1); // Exclude current visit
+            
+            sortedVisits.forEach((visit, index) => {
+                const visitElement = document.createElement('div');
+                visitElement.className = 'visit-data';
+                
+                let locationText = 'Unknown';
+                if (typeof visit.location === 'object') {
+                    locationText = `${visit.location.latitude}, ${visit.location.longitude} (±${visit.location.accuracy})`;
+                } else if (visit.location) {
+                    locationText = visit.location;
+                }
+                
+                visitElement.innerHTML = `
+                    <h3>Visit ${index + 1} - ${new Date(visit.timestamp).toLocaleString()}</h3>
+                    <table class="data-table">
+                        <tr>
+                            <th>Information Type</th>
+                            <th>Value</th>
+                        </tr>
+                        <tr>
+                            <td>Device Type</td>
+                            <td>${visit.deviceType}</td>
+                        </tr>
+                        <tr>
+                            <td>Location</td>
+                            <td>${locationText}</td>
+                        </tr>
+                        <tr>
+                            <td>Posture</td>
+                            <td>${visit.posture?.prediction || 'Unknown'}
+                                <span class="confidence">(${visit.posture?.confidence || 0}%)</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Movement</td>
+                            <td>${visit.movement?.prediction || 'Unknown'}
+                                <span class="confidence">(${visit.movement?.confidence || 0}%)</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>IP Address</td>
+                            <td>${visit.ipAddress || 'Unknown'}</td>
+                        </tr>
+                        <tr>
+                            <td>Browser</td>
+                            <td>${visit.browser || 'Unknown'}</td>
+                        </tr>
+                    </table>
+                `;
+                container.appendChild(visitElement);
+            });
+        }
+        
+        // Device info detection
         function getDeviceInfo() {
             const userAgent = navigator.userAgent;
             let deviceType = 'Desktop';
@@ -345,93 +833,11 @@
             }
             
             return {
-                deviceType: deviceType,
-                browser: browser,
+                deviceType,
+                browser,
                 screenResolution: `${window.screen.width} × ${window.screen.height}`,
                 isMobile: /Mobi|Android|iPhone|iPad|iPod/i.test(userAgent)
             };
-        }
-        
-        function updateDisplay(currentVisit, previousVisits) {
-            // Display current visit data
-            document.getElementById('current-timestamp').textContent = currentVisit.timestamp;
-            document.getElementById('current-device').textContent = currentVisit.deviceType;
-            document.getElementById('current-browser').textContent = currentVisit.browser;
-            document.getElementById('current-resolution').textContent = currentVisit.screenResolution;
-            document.getElementById('current-ip').textContent = currentVisit.ipAddress;
-            
-            // Display location
-            if (typeof currentVisit.location === 'object') {
-                document.getElementById('current-location').textContent = 
-                    `Lat: ${currentVisit.location.latitude}, Long: ${currentVisit.location.longitude} (±${currentVisit.location.accuracy})`;
-            } else {
-                document.getElementById('current-location').textContent = currentVisit.location;
-            }
-            
-            // Display posture and movement
-            document.getElementById('current-posture').textContent = currentVisit.posture;
-            document.getElementById('current-movement').textContent = currentVisit.movement;
-            
-            // Display previous visits (excluding current one)
-            const previousVisitsContainer = document.getElementById('previous-visits');
-            previousVisitsContainer.innerHTML = '';
-            
-            if (previousVisits.length <= 1) {
-                previousVisitsContainer.innerHTML = '<p>No previous visits recorded.</p>';
-                return;
-            }
-            
-            // Sort visits by timestamp (newest first)
-            const sortedVisits = [...previousVisits]
-                .filter(visit => visit.timestamp !== currentVisit.timestamp)
-                .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-            
-            sortedVisits.forEach((visit, index) => {
-                const visitElement = document.createElement('div');
-                visitElement.className = 'visit-data';
-                visitElement.innerHTML = `
-                    <h3>Visit ${sortedVisits.length - index} - ${new Date(visit.timestamp).toLocaleString()}</h3>
-                    <table class="data-table">
-                        <tr>
-                            <th>Information Type</th>
-                            <th>Value</th>
-                        </tr>
-                        <tr>
-                            <td>Device Type</td>
-                            <td>${visit.deviceType}</td>
-                        </tr>
-                        <tr>
-                            <td>Location</td>
-                            <td>${
-                                typeof visit.location === 'object' 
-                                    ? `Lat: ${visit.location.latitude}, Long: ${visit.location.longitude} (±${visit.location.accuracy})`
-                                    : visit.location
-                            }</td>
-                        </tr>
-                        <tr>
-                            <td>Posture</td>
-                            <td>${visit.posture}</td>
-                        </tr>
-                        <tr>
-                            <td>Movement</td>
-                            <td>${visit.movement}</td>
-                        </tr>
-                        <tr>
-                            <td>IP Address</td>
-                            <td>${visit.ipAddress}</td>
-                        </tr>
-                        <tr>
-                            <td>Browser</td>
-                            <td>${visit.browser}</td>
-                        </tr>
-                        <tr>
-                            <td>Screen Resolution</td>
-                            <td>${visit.screenResolution}</td>
-                        </tr>
-                    </table>
-                `;
-                previousVisitsContainer.appendChild(visitElement);
-            });
         }
     </script>
 </body>
