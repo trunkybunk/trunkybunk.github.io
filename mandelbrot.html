@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mandelbrot Set Explorer</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            color: white;
+            touch-action: none;
+        }
+        canvas {
+            display: block;
+            cursor: crosshair;
+            touch-action: none;
+        }
+        .controls {
+            padding: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            border-radius: 5px;
+            margin-top: 10px;
+            width: 90%;
+            max-width: 600px;
+        }
+        button {
+            padding: 5px 10px;
+            margin: 0 5px;
+            cursor: pointer;
+        }
+        .info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            z-index: 100;
+        }
+        .debug {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 30vh;
+            overflow-y: auto;
+            z-index: 100;
+        }
+        .debug-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .control-group {
+            margin: 5px 0;
+        }
+        @media (max-width: 600px) {
+            .controls {
+                font-size: 14px;
+            }
+            button {
+                padding: 8px 12px;
+                margin: 2px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="info">
+        <div>Zoom: <span id="zoom-level">1x</span></div>
+        <div>Center: <span id="center-coords">0, 0</span></div>
+        <div>Iterations: <span id="iterations-value">100</span></div>
+    </div>
+    <canvas id="mandelbrot"></canvas>
+    <div class="controls">
+        <div class="control-group">
+            <button id="zoom-in">Zoom In (×2)</button>
+            <button id="zoom-out">Zoom Out (÷2)</button>
+            <button id="reset">Reset View</button>
+        </div>
+        <div class="control-group">
+            <span>Iterations: </span>
+            <input type="range" id="iterations" min="20" max="1000" value="100">
+            <span id="iterations-display">100</span>
+        </div>
+        <div class="control-group">
+            <span>Color Scheme: </span>
+            <select id="color-scheme">
+                <option value="rainbow">Rainbow</option>
+                <option value="grayscale">Grayscale</option>
+                <option value="fire">Fire</option>
+                <option value="ocean">Ocean</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="debug">
+        <div class="debug-title">Debug Information</div>
+        <div id="debug-info">Initializing renderer...</div>
+    </div>
+
+    <script>
+        // DOM elements
+        const canvas = document.getElementById('mandelbrot');
+        const ctx = canvas.getContext('2d');
+        const zoomLevelElement = document.getElementById('zoom-level');
+        const centerCoordsElement = document.getElementById('center-coords');
+        const iterationsInput = document.getElementById('iterations');
+        const iterationsDisplay = document.getElementById('iterations-display');
+        const iterationsValue = document.getElementById('iterations-value');
+        const zoomInBtn = document.getElementById('zoom-in');
+        const zoomOutBtn = document.getElementById('zoom-out');
+        const resetBtn = document.getElementById('reset');
+        const colorSchemeSelect = document.getElementById('color-scheme');
+        const debugInfoElement = document.getElementById('debug-info');
+
+        // Debug information
+        let debugData = {
+            lastRenderTime: 0,
+            canvasSize: '0×0',
+            renderCount: 0,
+            touchEvents: 0,
+            pointerType: 'unknown',
+            maxIterations: 0,
+            colorScheme: 'rainbow',
+            scale: 0,
+            centerX: 0,
+            centerY: 0,
+            status: 'Initializing'
+        };
+
+        // Update debug information
+        function updateDebugInfo() {
+            debugInfoElement.innerHTML = `
+                Status: <strong>${debugData.status}</strong><br>
+                Render #${debugData.renderCount} | Last render: ${debugData.lastRenderTime}ms<br>
+                Canvas: ${debugData.canvasSize} | Pointer: ${debugData.pointerType}<br>
+                Touch events: ${debugData.touchEvents} | Max iterations: ${debugData.maxIterations}<br>
+                Color scheme: ${debugData.colorScheme}<br>
+                Scale: ${debugData.scale.toExponential(4)} | Center: (${debugData.centerX.toFixed(10)}, ${debugData.centerY.toFixed(10)})<br>
+                Viewport: ${(-2/scale + centerX).toFixed(3)} to ${(2/scale + centerX).toFixed(3)} × 
+                ${(-2/scale + centerY).toFixed(3)} to ${(2/scale + centerY).toFixed(3)}
+            `;
+        }
+
+        // Set canvas size
+        function resizeCanvas() {
+            const width = window.innerWidth;
+            const height = window.innerHeight - 160; // Leave space for controls and debug
+            
+            if (canvas.width !== width || canvas.height !== height) {
+                debugData.status = "Resizing canvas";
+                updateDebugInfo();
+                
+                canvas.width = width;
+                canvas.height = height;
+                debugData.canvasSize = `${width}×${height}`;
+                
+                debugData.status = "Canvas resized, rendering...";
+                updateDebugInfo();
+                renderMandelbrot();
+            }
+        }
+        
+        // Mandelbrot parameters
+        let centerX = -0.5;
+        let centerY = 0;
+        let scale = 2.5;
+        let maxIterations = 100;
+        let isDragging = false;
+        let lastX, lastY;
+        let colorScheme = 'rainbow';
+
+        // Color palettes
+        const colorPalettes = {
+            rainbow: [],
+            grayscale: [],
+            fire: [],
+            ocean: []
+        };
+
+        // Initialize color palettes
+        function initColorPalettes() {
+            debugData.status = "Initializing color palettes";
+            updateDebugInfo();
+            
+            // Rainbow palette
+            for (let i = 0; i < 16; i++) {
+                const frequency = 0.3;
+                colorPalettes.rainbow.push(
+                    Math.floor(Math.sin(frequency * i + 0) * 127 + 128),
+                    Math.floor(Math.sin(frequency * i + 2) * 127 + 128),
+                    Math.floor(Math.sin(frequency * i + 4) * 127 + 128)
+                );
+            }
+
+            // Grayscale palette
+            for (let i = 0; i < 16; i++) {
+                const intensity = Math.floor(i * 255 / 16);
+                colorPalettes.grayscale.push(intensity, intensity, intensity);
+            }
+
+            // Fire palette
+            for (let i = 0; i < 16; i++) {
+                colorPalettes.fire.push(
+                    Math.min(255, i * 20),
+                    Math.min(255, i * 10),
+                    Math.min(255, i * 5)
+                );
+            }
+
+            // Ocean palette
+            for (let i = 0; i < 16; i++) {
+                colorPalettes.ocean.push(
+                    Math.min(255, i * 5),
+                    Math.min(255, i * 10),
+                    Math.min(255, 100 + i * 15)
+                );
+            }
+            
+            debugData.status = "Color palettes initialized";
+            updateDebugInfo();
+        }
+
+        // Render the Mandelbrot set
+        function renderMandelbrot() {
+            const startTime = performance.now();
+            debugData.status = "Starting render";
+            updateDebugInfo();
+            
+            const width = canvas.width;
+            const height = canvas.height;
+            const imageData = ctx.createImageData(width, height);
+            const data = imageData.data;
+            const colors = colorPalettes[colorScheme];
+            
+            // Update debug data with current parameters
+            debugData.scale = scale;
+            debugData.centerX = centerX;
+            debugData.centerY = centerY;
+            debugData.maxIterations = maxIterations;
+            
+            for (let x = 0; x < width; x++) {
+                for (let y = 0; y < height; y++) {
+                    // Convert pixel coordinates to complex plane coordinates
+                    const zx0 = (x - width / 2) / (0.25 * scale * width) + centerX;
+                    const zy0 = (y - height / 2) / (0.25 * scale * height) + centerY;
+                    
+                    let zx = zx0;
+                    let zy = zy0;
+                    let iter = 0;
+                    
+                    // Mandelbrot iteration
+                    while (zx * zx + zy * zy < 4 && iter < maxIterations) {
+                        const tmp = zx * zx - zy * zy + zx0;
+                        zy = 2 * zx * zy + zy0;
+                        zx = tmp;
+                        iter++;
+                    }
+                    
+                    // Set pixel color based on iterations
+                    const idx = (y * width + x) * 4;
+                    
+                    if (iter === maxIterations) {
+                        // Inside the Mandelbrot set - black
+                        data[idx] = 0;
+                        data[idx + 1] = 0;
+                        data[idx + 2] = 0;
+                    } else {
+                        // Outside - colored based on iterations
+                        const colorIdx = iter % 16;
+                        data[idx] = colors[colorIdx * 3];
+                        data[idx + 1] = colors[colorIdx * 3 + 1];
+                        data[idx + 2] = colors[colorIdx * 3 + 2];
+                    }
+                    data[idx + 3] = 255; // Alpha
+                }
+            }
+            
+            ctx.putImageData(imageData, 0, 0);
+            
+            // Update debug info
+            debugData.lastRenderTime = Math.round(performance.now() - startTime);
+            debugData.renderCount++;
+            debugData.status = "Render completed";
+            updateDebugInfo();
+            updateInfo();
+        }
+
+        // Update zoom and coordinate info
+        function updateInfo() {
+            zoomLevelElement.textContent = `${(1/scale * 2.5).toExponential(2)}x`;
+            centerCoordsElement.textContent = `${centerX.toFixed(10)}, ${centerY.toFixed(10)}`;
+            iterationsValue.textContent = maxIterations;
+        }
+
+        // Zoom functions
+        function zoom(factor, clientX, clientY) {
+            debugData.status = `Zooming ${factor > 1 ? 'in' : 'out'}`;
+            updateDebugInfo();
+            
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = clientX - rect.left;
+            const mouseY = clientY - rect.top;
+            
+            if (mouseX !== undefined && mouseY !== undefined && 
+                mouseX >= 0 && mouseX <= canvas.width && 
+                mouseY >= 0 && mouseY <= canvas.height) {
+                // Adjust center based on pointer position for zooming toward cursor
+                const width = canvas.width;
+                const height = canvas.height;
+                centerX += (mouseX - width / 2) / (0.25 * scale * width) - 
+                          (mouseX - width / 2) / (0.25 * scale * width * factor);
+                centerY += (mouseY - height / 2) / (0.25 * scale * height) - 
+                          (mouseY - height / 2) / (0.25 * scale * height * factor);
+            }
+            scale *= factor;
+            renderMandelbrot();
+        }
+
+        // Handle pointer events (works for both mouse and touch)
+        function handlePointerStart(e) {
+            e.preventDefault();
+            isDragging = true;
+            const rect = canvas.getBoundingClientRect();
+            lastX = e.clientX || e.touches[0].clientX;
+            lastY = e.clientY || e.touches[0].clientY;
+            debugData.pointerType = e.pointerType || (e.touches ? 'touch' : 'mouse');
+            if (e.touches) debugData.touchEvents++;
+            updateDebugInfo();
+        }
+
+        function handlePointerEnd() {
+            isDragging = false;
+        }
+
+        function handlePointerMove(e) {
+            if (isDragging) {
+                e.preventDefault();
+                const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+                const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+                
+                if (clientX && clientY) {
+                    const dx = clientX - lastX;
+                    const dy = clientY - lastY;
+                    lastX = clientX;
+                    lastY = clientY;
+                    
+                    centerX -= dx / (0.25 * scale * canvas.width);
+                    centerY -= dy / (0.25 * scale * canvas.height);
+                    renderMandelbrot();
+                }
+            }
+        }
+
+        // Initialize the application
+        function init() {
+            debugData.status = "Initializing application";
+            updateDebugInfo();
+            
+            // Set up event listeners
+            window.addEventListener('resize', resizeCanvas);
+            
+            // Mouse/touch events
+            canvas.addEventListener('mousedown', handlePointerStart);
+            canvas.addEventListener('touchstart', handlePointerStart);
+            canvas.addEventListener('mouseup', handlePointerEnd);
+            canvas.addEventListener('touchend', handlePointerEnd);
+            canvas.addEventListener('mousemove', handlePointerMove);
+            canvas.addEventListener('touchmove', handlePointerMove, { passive: false });
+            canvas.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const factor = e.deltaY > 0 ? 0.8 : 1.25;
+                zoom(factor, e.clientX, e.clientY);
+            });
+
+            // Button events
+            zoomInBtn.addEventListener('click', () => zoom(2, canvas.width/2, canvas.height/2));
+            zoomOutBtn.addEventListener('click', () => zoom(0.5, canvas.width/2, canvas.height/2));
+            resetBtn.addEventListener('click', () => {
+                centerX = -0.5;
+                centerY = 0;
+                scale = 2.5;
+                renderMandelbrot();
+            });
+
+            // Iterations control
+            iterationsInput.addEventListener('input', () => {
+                maxIterations = parseInt(iterationsInput.value);
+                iterationsDisplay.textContent = maxIterations;
+                debugData.maxIterations = maxIterations;
+                updateDebugInfo();
+                renderMandelbrot();
+            });
+
+            // Color scheme control
+            colorSchemeSelect.addEventListener('change', () => {
+                colorScheme = colorSchemeSelect.value;
+                debugData.colorScheme = colorScheme;
+                updateDebugInfo();
+                renderMandelbrot();
+            });
+
+            // Initialize color palettes
+            initColorPalettes();
+            
+            // Initial debug info
+            debugData.pointerType = 'mouse';
+            if ('ontouchstart' in window) {
+                debugData.pointerType = 'touch-capable';
+            }
+            
+            // Set initial canvas size and render
+            resizeCanvas();
+            
+            debugData.status = "Initialization complete";
+            updateDebugInfo();
+        }
+
+        // Start the application
+        init();
+    </script>
+</body>
+</html>
