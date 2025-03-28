@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mandelbrot Explorer</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #000;
+            font-family: Arial, sans-serif;
+            color: white;
+            touch-action: none;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        #canvas-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+        canvas {
+            display: block;
+            position: absolute;
+            touch-action: none;
+            width: 100%;
+            height: 100%;
+        }
+        .controls {
+            padding: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            border-radius: 5px;
+            margin: 10px;
+            z-index: 100;
+        }
+        button {
+            padding: 8px 12px;
+            margin: 0 5px;
+            cursor: pointer;
+            background: #333;
+            color: white;
+            border: 1px solid #555;
+            border-radius: 5px;
+            font-size: 14px;
+            min-width: 80px;
+        }
+        button:active {
+            background: #555;
+        }
+        .info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 12px;
+            z-index: 100;
+        }
+        .debug {
+            background-color: rgba(0, 0, 0, 0.8);
+            padding: 10px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 20vh;
+            overflow-y: auto;
+            margin: 0 10px 10px 10px;
+            border-radius: 5px;
+        }
+        .debug-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .control-group {
+            margin: 8px 0;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+        }
+        input[type="range"] {
+            flex: 1;
+            min-width: 100px;
+            max-width: 200px;
+        }
+        @media (max-width: 600px) {
+            .controls {
+                padding: 8px;
+            }
+            button {
+                padding: 10px 14px;
+                margin: 2px;
+                min-width: 70px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="info">
+        <div>Zoom: <span id="zoom-level">1x</span></div>
+        <div>Center: <span id="center-coords">0, 0</span></div>
+        <div>Iterations: <span id="iterations-value">100</span></div>
+    </div>
+    
+    <div id="canvas-container">
+        <canvas id="mandelbrot"></canvas>
+    </div>
+    
+    <div class="controls">
+        <div class="control-group">
+            <button id="zoom-in">Zoom In</button>
+            <button id="zoom-out">Zoom Out</button>
+            <button id="reset">Reset</button>
+        </div>
+        <div class="control-group">
+            <span>Iterations: </span>
+            <input type="range" id="iterations" min="20" max="500" value="100">
+            <span id="iterations-display">100</span>
+        </div>
+        <div class="control-group">
+            <span>Smoothing: </span>
+            <input type="range" id="smoothing" min="0" max="100" value="50">
+            <span id="smoothing-display">50%</span>
+        </div>
+        <div class="control-group">
+            <span>Color: </span>
+            <select id="color-scheme">
+                <option value="rainbow">Rainbow</option>
+                <option value="fire">Fire</option>
+                <option value="ocean">Ocean</option>
+                <option value="grayscale">Grayscale</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="debug">
+        <div class="debug-title">Debug Information</div>
+        <div id="debug-info">Initializing...</div>
+    </div>
+
+    <script>
+        // DOM elements
+        const canvasContainer = document.getElementById('canvas-container');
+        const canvas = document.getElementById('mandelbrot');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        const zoomLevelElement = document.getElementById('zoom-level');
+        const centerCoordsElement = document.getElementById('center-coords');
+        const iterationsInput = document.getElementById('iterations');
+        const iterationsDisplay = document.getElementById('iterations-display');
+        const smoothingInput = document.getElementById('smoothing');
+        const smoothingDisplay = document.getElementById('smoothing-display');
+        const zoomInBtn = document.getElementById('zoom-in');
+        const zoomOutBtn = document.getElementById('zoom-out');
+        const resetBtn = document.getElementById('reset');
+        const colorSchemeSelect = document.getElementById('color-scheme');
+        const debugInfoElement = document.getElementById('debug-info');
+
+        // Debug information
+        let debugData = {
+            lastRenderTime: 0,
+            canvasSize: '0×0',
+            renderCount: 0,
+            touchEvents: 0,
+            pointerType: 'unknown',
+            maxIterations: 100,
+            smoothing: 50,
+            colorScheme: 'rainbow',
+            scale: 2.5,
+            centerX: -0.5,
+            centerY: 0,
+            status: 'Initializing',
+            pinchDistance: 0
+        };
+
+        // Update debug information
+        function updateDebugInfo() {
+            debugInfoElement.innerHTML = `
+                <strong>Status:</strong> ${debugData.status}<br>
+                <strong>Render #${debugData.renderCount}</strong> | Last render: ${debugData.lastRenderTime}ms<br>
+                <strong>Viewport:</strong> ${debugData.canvasSize} | Scale: ${debugData.scale.toExponential(4)}<br>
+                <strong>Center:</strong> (${debugData.centerX.toFixed(6)}, ${debugData.centerY.toFixed(6)})<br>
+                <strong>Iterations:</strong> ${debugData.maxIterations} | Smoothing: ${debugData.smoothing}%
+            `;
+        }
+
+        // Set canvas size
+        function resizeCanvas() {
+            const width = canvasContainer.clientWidth;
+            const height = canvasContainer.clientHeight;
+            
+            if (canvas.width !== width || canvas.height !== height) {
+                canvas.width = width;
+                canvas.height = height;
+                debugData.canvasSize = `${width}×${height}`;
+                debugData.status = "Canvas resized";
+                updateDebugInfo();
+                requestRender();
+            }
+        }
+
+        // Mandelbrot parameters
+        let centerX = -0.5;
+        let centerY = 0;
+        let scale = 2.5;
+        let maxIterations = 100;
+        let smoothing = 50;
+        let isDragging = false;
+        let lastX, lastY;
+        let colorScheme = 'rainbow';
+        let renderRequestId = null;
+        let needsRender = true;
+        let isPinching = false;
+        let initialPinchDistance = 0;
+        let initialScale = 1;
+
+        // Color palettes with smoother gradients
+        const colorPalettes = {
+            rainbow: [],
+            fire: [],
+            ocean: [],
+            grayscale: []
+        };
+
+        // Initialize color palettes with smoother transitions
+        function initColorPalettes() {
+            // Rainbow palette with smoother transitions
+            for (let i = 0; i < 256; i++) {
+                const frequency = 0.03;
+                colorPalettes.rainbow.push(
+                    Math.floor(Math.sin(frequency * i + 0) * 127 + 128),
+                    Math.floor(Math.sin(frequency * i + 2) * 127 + 128),
+                    Math.floor(Math.sin(frequency * i + 4) * 127 + 128)
+                );
+            }
+
+            // Fire palette
+            for (let i = 0; i < 256; i++) {
+                colorPalettes.fire.push(
+                    Math.min(255, i),
+                    Math.min(255, i * 0.7),
+                    Math.min(255, i * 0.3)
+                );
+            }
+
+            // Ocean palette
+            for (let i = 0; i < 256; i++) {
+                colorPalettes.ocean.push(
+                    Math.min(255, i * 0.3),
+                    Math.min(255, i * 0.5),
+                    Math.min(255, 100 + i * 0.6)
+                );
+            }
+
+            // Grayscale palette
+            for (let i = 0; i < 256; i++) {
+                const intensity = Math.floor(i);
+                colorPalettes.grayscale.push(intensity, intensity, intensity);
+            }
+        }
+
+        // Smooth coloring algorithm
+        function getSmoothedColor(iter, zx, zy, maxIter) {
+            if (iter === maxIter) return [0, 0, 0];
+            
+            // Smooth iteration count
+            const log_zn = Math.log(zx * zx + zy * zy) / 2;
+            const nu = Math.log(log_zn / Math.log(2)) / Math.log(2);
+            let smoothed = iter + 1 - nu;
+            
+            // Apply user-controlled smoothing
+            smoothed = iter + (smoothing / 100) * (smoothed - iter);
+            
+            // Get color from palette
+            const colorIdx = Math.floor(smoothed * 16) % 256;
+            const colors = colorPalettes[colorScheme];
+            return [
+                colors[colorIdx * 3],
+                colors[colorIdx * 3 + 1],
+                colors[colorIdx * 3 + 2]
+            ];
+        }
+
+        // Render the Mandelbrot set with smoothing
+        function renderMandelbrot() {
+            if (!needsRender) return;
+            
+            const startTime = performance.now();
+            const width = canvas.width;
+            const height = canvas.height;
+            const imageData = ctx.createImageData(width, height);
+            const data = imageData.data;
+            
+            // Update debug data
+            debugData.scale = scale;
+            debugData.centerX = centerX;
+            debugData.centerY = centerY;
+            debugData.maxIterations = maxIterations;
+            debugData.smoothing = smoothing;
+            debugData.colorScheme = colorScheme;
+            debugData.status = "Rendering...";
+            updateDebugInfo();
+            
+            // Render in chunks to maintain responsiveness
+            const chunkSize = Math.floor(width * height / 4); // Quarter of the image per chunk
+            let pixelsRendered = 0;
+            
+            function renderChunk() {
+                const startPixel = pixelsRendered;
+                const endPixel = Math.min(pixelsRendered + chunkSize, width * height);
+                
+                for (let p = startPixel; p < endPixel; p++) {
+                    const x = p % width;
+                    const y = Math.floor(p / width);
+                    
+                    // Convert pixel coordinates to complex plane coordinates
+                    const zx0 = (x - width / 2) / (0.25 * scale * width) + centerX;
+                    const zy0 = (y - height / 2) / (0.25 * scale * height) + centerY;
+                    
+                    let zx = zx0;
+                    let zy = zy0;
+                    let iter = 0;
+                    
+                    // Mandelbrot iteration
+                    while (zx * zx + zy * zy < 4 && iter < maxIterations) {
+                        const tmp = zx * zx - zy * zy + zx0;
+                        zy = 2 * zx * zy + zy0;
+                        zx = tmp;
+                        iter++;
+                    }
+                    
+                    // Set pixel color with smoothing
+                    const idx = (y * width + x) * 4;
+                    const color = iter === maxIterations ? 
+                        [0, 0, 0] : 
+                        getSmoothedColor(iter, zx, zy, maxIterations);
+                    
+                    data[idx] = color[0];
+                    data[idx + 1] = color[1];
+                    data[idx + 2] = color[2];
+                    data[idx + 3] = 255; // Alpha
+                }
+                
+                pixelsRendered = endPixel;
+                
+                if (pixelsRendered < width * height) {
+                    // Render next chunk on next frame
+                    renderRequestId = requestAnimationFrame(renderChunk);
+                } else {
+                    // Finalize render
+                    ctx.putImageData(imageData, 0, 0);
+                    
+                    debugData.lastRenderTime = Math.round(performance.now() - startTime);
+                    debugData.renderCount++;
+                    debugData.status = "Render complete";
+                    updateDebugInfo();
+                    updateInfo();
+                    
+                    needsRender = false;
+                }
+            }
+            
+            // Start rendering
+            renderChunk();
+        }
+
+        // Request a render (debounced)
+        function requestRender() {
+            needsRender = true;
+            if (!renderRequestId) {
+                renderRequestId = requestAnimationFrame(renderMandelbrot);
+            }
+        }
+
+        // Update display info
+        function updateInfo() {
+            zoomLevelElement.textContent = `${(1/scale * 2.5).toExponential(2)}x`;
+            centerCoordsElement.textContent = `${centerX.toFixed(6)}, ${centerY.toFixed(6)}`;
+            iterationsDisplay.textContent = maxIterations;
+            smoothingDisplay.textContent = `${smoothing}%`;
+        }
+
+        // Zoom functions
+        function zoom(factor, clientX, clientY) {
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = clientX - rect.left;
+            const mouseY = clientY - rect.top;
+            
+            if (mouseX >= 0 && mouseX <= canvas.width && mouseY >= 0 && mouseY <= canvas.height) {
+                // Adjust center based on pointer position
+                const width = canvas.width;
+                const height = canvas.height;
+                centerX += (mouseX - width / 2) / (0.25 * scale * width) - 
+                          (mouseX - width / 2) / (0.25 * scale * width * factor);
+                centerY += (mouseY - height / 2) / (0.25 * scale * height) - 
+                          (mouseY - height / 2) / (0.25 * scale * height * factor);
+            }
+            scale *= factor;
+            requestRender();
+        }
+
+        // Handle pointer events
+        function handlePointerStart(e) {
+            e.preventDefault();
+            if (e.touches && e.touches.length >= 2) {
+                // Pinch zoom start
+                isPinching = true;
+                isDragging = false;
+                initialPinchDistance = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+                initialScale = scale;
+                debugData.touchEvents++;
+            } else {
+                // Drag start
+                isDragging = true;
+                isPinching = false;
+                const rect = canvas.getBoundingClientRect();
+                lastX = e.clientX || e.touches[0].clientX;
+                lastY = e.clientY || e.touches[0].clientY;
+                debugData.pointerType = e.pointerType || (e.touches ? 'touch' : 'mouse');
+            }
+            updateDebugInfo();
+        }
+
+        function handlePointerEnd() {
+            isDragging = false;
+            isPinching = false;
+        }
+
+        function handlePointerMove(e) {
+            e.preventDefault();
+            
+            if (isPinching && e.touches && e.touches.length >= 2) {
+                // Handle pinch zoom
+                const currentDistance = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+                const factor = initialPinchDistance / currentDistance;
+                scale = initialScale * factor;
+                
+                // Calculate center between two touch points
+                const centerClientX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+                const centerClientY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+                const rect = canvas.getBoundingClientRect();
+                const mouseX = centerClientX - rect.left;
+                const mouseY = centerClientY - rect.top;
+                
+                if (mouseX >= 0 && mouseX <= canvas.width && mouseY >= 0 && mouseY <= canvas.height) {
+                    const width = canvas.width;
+                    const height = canvas.height;
+                    centerX += (mouseX - width / 2) / (0.25 * initialScale * width) - 
+                              (mouseX - width / 2) / (0.25 * scale * width);
+                    centerY += (mouseY - height / 2) / (0.25 * initialScale * height) - 
+                              (mouseY - height / 2) / (0.25 * scale * height);
+                }
+                
+                requestRender();
+            } 
+            else if (isDragging) {
+                // Handle drag pan
+                const clientX = e.clientX || (e.touches && e.touches[0].clientX);
+                const clientY = e.clientY || (e.touches && e.touches[0].clientY);
+                
+                if (clientX && clientY) {
+                    const dx = clientX - lastX;
+                    const dy = clientY - lastY;
+                    lastX = clientX;
+                    lastY = clientY;
+                    
+                    centerX -= dx / (0.25 * scale * canvas.width);
+                    centerY -= dy / (0.25 * scale * canvas.height);
+                    requestRender();
+                }
+            }
+        }
+
+        // Initialize the application
+        function init() {
+            // Set up event listeners
+            window.addEventListener('resize', () => {
+                resizeCanvas();
+                requestRender();
+            });
+            
+            // Pointer events
+            canvas.addEventListener('mousedown', handlePointerStart);
+            canvas.addEventListener('touchstart', handlePointerStart, { passive: false });
+            window.addEventListener('mouseup', handlePointerEnd);
+            window.addEventListener('touchend', handlePointerEnd);
+            canvas.addEventListener('mousemove', handlePointerMove);
+            canvas.addEventListener('touchmove', handlePointerMove, { passive: false });
+            canvas.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const factor = e.deltaY > 0 ? 0.8 : 1.25;
+                zoom(factor, e.clientX, e.clientY);
+            }, { passive: false });
+
+            // Button events
+            zoomInBtn.addEventListener('click', () => {
+                zoom(1.5, canvas.width/2, canvas.height/2);
+            });
+            zoomOutBtn.addEventListener('click', () => {
+                zoom(0.66, canvas.width/2, canvas.height/2);
+            });
+            resetBtn.addEventListener('click', () => {
+                centerX = -0.5;
+                centerY = 0;
+                scale = 2.5;
+                requestRender();
+            });
+
+            // Iterations control
+            iterationsInput.addEventListener('input', () => {
+                maxIterations = parseInt(iterationsInput.value);
+                iterationsDisplay.textContent = maxIterations;
+                debugData.maxIterations = maxIterations;
+                updateDebugInfo();
+                requestRender();
+            });
+
+            // Smoothing control
+            smoothingInput.addEventListener('input', () => {
+                smoothing = parseInt(smoothingInput.value);
+                smoothingDisplay.textContent = `${smoothing}%`;
+                debugData.smoothing = smoothing;
+                updateDebugInfo();
+                requestRender();
+            });
+
+            // Color scheme control
+            colorSchemeSelect.addEventListener('change', () => {
+                colorScheme = colorSchemeSelect.value;
+                debugData.colorScheme = colorScheme;
+                updateDebugInfo();
+                requestRender();
+            });
+
+            // Initialize color palettes
+            initColorPalettes();
+            
+            // Initial debug info
+            debugData.pointerType = 'mouse';
+            if ('ontouchstart' in window) {
+                debugData.pointerType = 'touch-capable';
+            }
+            
+            // Set initial canvas size and render
+            resizeCanvas();
+            requestRender();
+            
+            // Start render loop
+            function renderLoop() {
+                if (needsRender) {
+                    renderMandelbrot();
+                }
+                renderRequestId = requestAnimationFrame(renderLoop);
+            }
+            renderLoop();
+        }
+
+        // Start the application
+        init();
+    </script>
+</body>
+</html>
